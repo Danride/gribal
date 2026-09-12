@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
 <title>🍄 Грибник-Лудоман</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -20,9 +21,7 @@ body{
 }
 .wrap{
   display:flex;flex-direction:column;
-  height:100vh;
-  height:100dvh;   /* динамическая высота под мобильные браузеры */
-  width:100%;
+  height:100vh;height:100dvh;width:100%;
   position:relative;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
@@ -34,8 +33,7 @@ body{
   background:linear-gradient(180deg,#0e1a12,#0a130d);
   border-bottom:2px solid #1e3524;z-index:20;
   box-shadow:0 4px 20px rgba(0,0,0,.6);
-  flex-shrink:0;
-  min-height:46px;
+  flex-shrink:0;min-height:46px;
 }
 .hud-left{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0;overflow:hidden}
 .coin{
@@ -49,29 +47,16 @@ body{
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
 .stat{font-size:10.5px;color:#8fae94;letter-spacing:.2px;white-space:nowrap;display:none}
 .stat b{color:#cfe8cf;font-size:11px}
-.stat.show-mobile{display:inline}
-.pity{
-  display:flex;align-items:center;gap:5px;font-size:10px;color:#8fae94;
-  flex-shrink:0;margin-left:auto;
-}
-.pity-bar{
-  width:70px;height:7px;border-radius:4px;background:#0b120d;
-  border:1px solid #24382a;overflow:hidden;flex-shrink:0;
-}
-.pity-bar i{
-  display:block;height:100%;width:0;border-radius:4px;
-  background:linear-gradient(90deg,#b45cff,#ffb020,#ff3b3b);
-  transition:width .25s;
-}
+.pity{display:flex;align-items:center;gap:5px;font-size:10px;color:#8fae94;flex-shrink:0;margin-left:auto}
+.pity-bar{width:70px;height:7px;border-radius:4px;background:#0b120d;border:1px solid #24382a;overflow:hidden;flex-shrink:0}
+.pity-bar i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#b45cff,#ffb020,#ff3b3b);transition:width .25s}
 .lvl-badge{
   display:flex;align-items:center;gap:4px;
   font-size:11px;color:#e8d0ff;font-weight:800;
   padding:3px 8px;border-radius:7px;
   background:linear-gradient(180deg,rgba(180,92,255,.15),rgba(180,92,255,.05));
   border:1.5px solid rgba(180,92,255,.3);
-  cursor:pointer;transition:.15s;
-  white-space:nowrap;
-  flex-shrink:0;
+  cursor:pointer;transition:.15s;white-space:nowrap;flex-shrink:0;
   max-width:120px;overflow:hidden;text-overflow:ellipsis;
 }
 .lvl-badge .icn{font-size:13px;flex-shrink:0}
@@ -99,7 +84,6 @@ body{
 }
 .tree.s{border-left-width:20px;border-right-width:20px;border-bottom-color:#08150c}
 .tree.xs{border-left-width:14px;border-right-width:14px;border-bottom-color:#0a1a0f}
-
 .fly{
   position:absolute;width:4px;height:4px;border-radius:50%;
   background:#d9ff8a;box-shadow:0 0 10px 2px rgba(190,255,110,.7);
@@ -116,11 +100,8 @@ body{
 .mush{
   position:absolute;width:72px;height:80px;cursor:pointer;
   transform:translate(-50%,-100%) scale(var(--s,1));
-  transform-origin:bottom center;
-  transition:filter .15s;
+  transform-origin:bottom center;transition:filter .15s;
   animation:spawnIn .45s cubic-bezier(.2,1.6,.5,1) backwards;
-  /* увеличенная зона тапа */
-  padding:0;
   touch-action:manipulation;
 }
 @keyframes spawnIn{from{opacity:0;transform:translate(-50%,-100%) scale(.2)}}
@@ -137,11 +118,7 @@ body{
   40%{transform:translateY(-24px) scale(1.08)}
   100%{transform:translateY(0) scale(1)}
 }
-
-.mush.eyes{
-  cursor:default;
-  pointer-events:auto;
-}
+.mush.eyes{cursor:default;pointer-events:auto}
 .mush.eyes .msvg{
   filter:drop-shadow(0 0 14px rgba(255,220,80,.6)) drop-shadow(0 6px 8px rgba(0,0,0,.55));
   animation:eyesGlow 2.4s ease-in-out infinite alternate;
@@ -160,27 +137,22 @@ body{
 /* ================= SLUG ================= */
 .slug{
   position:absolute;width:70px;height:42px;
-  transform:translate(-50%,-50%);
-  transform-origin:center center;
-  pointer-events:none;
-  z-index:4;
-  animation:spawnIn .5s ease backwards;
+  transform:translate(-50%,-50%);transform-origin:center center;
+  pointer-events:none;z-index:4;animation:spawnIn .5s ease backwards;
 }
 .slug .ssvg{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .slug.leaving{transition:transform .8s ease-in, opacity .8s;opacity:0;transform:translate(-50%,-50%) scale(.4)}
 
 /* Speech bubble */
 .speech-bubble{
-  position:absolute;
-  bottom:calc(100% + 4px);left:50%;
+  position:absolute;bottom:calc(100% + 4px);left:50%;
   transform:translateX(-50%);
   background:#fff8e7;color:#1a1010;
   padding:6px 9px;border-radius:10px;
   font-size:10.5px;font-weight:800;
   max-width:160px;text-align:center;line-height:1.25;
   box-shadow:0 4px 14px rgba(0,0,0,.5), 0 0 0 2px #ffdb70;
-  pointer-events:none;z-index:5;opacity:0;
-  letter-spacing:.2px;
+  pointer-events:none;z-index:5;opacity:0;letter-spacing:.2px;
 }
 .speech-bubble.show{animation:bubbleIn .35s cubic-bezier(.2,1.6,.5,1) forwards}
 .speech-bubble::after{
@@ -193,24 +165,18 @@ body{
   to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 }
 
-/* ================= SPIT ================= */
+/* SPIT */
 .spit-glob{
-  position:absolute;
-  width:16px;height:16px;border-radius:50%;
+  position:absolute;width:16px;height:16px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%, #ffe58a, #e0a020 60%, #a05a10);
   box-shadow:0 0 16px rgba(255,200,60,.8), 0 0 8px rgba(255,120,0,.6);
-  pointer-events:none;
-  z-index:8;
-  transform:translate(-50%,-50%);
+  pointer-events:none;z-index:8;transform:translate(-50%,-50%);
   transition:left .55s cubic-bezier(.4,0,.6,1), top .55s cubic-bezier(.4,0,.6,1);
 }
 .spit-splat{
-  position:absolute;
-  width:50px;height:50px;border-radius:50%;
+  position:absolute;width:50px;height:50px;border-radius:50%;
   background:radial-gradient(circle, rgba(255,220,110,.75) 0%, rgba(180,120,30,.35) 45%, transparent 70%);
-  pointer-events:none;
-  z-index:7;
-  transform:translate(-50%,-50%) scale(0);
+  pointer-events:none;z-index:7;transform:translate(-50%,-50%) scale(0);
   animation:splatAnim .8s ease-out forwards;
 }
 @keyframes splatAnim{
@@ -256,8 +222,7 @@ body{
   justify-content:center;align-items:stretch;
   background:linear-gradient(0deg,#0e1a12,#0a130d);
   border-top:2px solid #1e3524;z-index:20;
-  box-shadow:0 -4px 20px rgba(0,0,0,.6);
-  flex-shrink:0;
+  box-shadow:0 -4px 20px rgba(0,0,0,.6);flex-shrink:0;
 }
 .dock-btn-wrap{position:relative;display:inline-flex;flex:1;max-width:80px}
 .dock-btn{
@@ -266,19 +231,12 @@ body{
   padding:6px 4px;width:100%;min-height:56px;
   border-radius:11px;background:linear-gradient(180deg,#1d3324,#12211a);
   border:2px solid #2c4a34;cursor:pointer;color:#cfe8cf;
-  font-family:inherit;letter-spacing:.2px;transition:.15s;
-  touch-action:manipulation;
+  font-family:inherit;letter-spacing:.2px;transition:.15s;touch-action:manipulation;
 }
 .dock-btn:active:not(:disabled){transform:scale(.96);filter:brightness(1.1)}
 .dock-btn:disabled{opacity:.35;cursor:not-allowed}
-.dock-btn .icn{
-  font-size:20px;line-height:1;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.55));
-}
-.dock-btn .lbl{
-  font-size:9px;font-weight:800;letter-spacing:.2px;
-  text-transform:uppercase;
-}
+.dock-btn .icn{font-size:20px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.dock-btn .lbl{font-size:9px;font-weight:800;letter-spacing:.2px;text-transform:uppercase}
 .dock-btn .sub{font-size:8.5px;font-weight:700;opacity:.75}
 .dock-btn .badge{
   position:absolute;top:-5px;right:-3px;
@@ -286,21 +244,11 @@ body{
   color:#fff;border-radius:10px;padding:1px 5px;
   font-size:9px;font-weight:800;
   box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 8px rgba(255,60,60,.5);
-  border:1.5px solid #2a0a0a;
-  min-width:16px;text-align:center;
+  border:1.5px solid #2a0a0a;min-width:16px;text-align:center;
 }
-.dock-btn.gold{
-  border-color:#6b5320;color:#ffd75e;
-  background:linear-gradient(180deg,#332a12,#1d180a);
-}
-.dock-btn.danger{
-  border-color:#6b2a2a;color:#ffb3b3;
-  background:linear-gradient(180deg,#33161a,#1d0e11);
-}
-.dock-btn.purple{
-  border-color:#4a2e6e;color:#dcc5ff;
-  background:linear-gradient(180deg,#2a1d3a,#1a1224);
-}
+.dock-btn.gold{border-color:#6b5320;color:#ffd75e;background:linear-gradient(180deg,#332a12,#1d180a)}
+.dock-btn.danger{border-color:#6b2a2a;color:#ffb3b3;background:linear-gradient(180deg,#33161a,#1d0e11)}
+.dock-btn.purple{border-color:#4a2e6e;color:#dcc5ff;background:linear-gradient(180deg,#2a1d3a,#1a1224)}
 .dock-sep{
   width:1px;background:linear-gradient(180deg,transparent,#2c4a34 30%,#2c4a34 70%,transparent);
   align-self:stretch;margin:2px 0;flex-shrink:0;
@@ -341,26 +289,32 @@ body{
 .prof-avatar{
   width:70px;height:70px;margin:2px auto 8px;
   display:flex;align-items:center;justify-content:center;
-  font-size:38px;line-height:1;
-  border-radius:50%;
+  font-size:38px;line-height:1;border-radius:50%;
   background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.15), transparent 70%),
              linear-gradient(180deg,#2a1d3a,#140b1e);
   border:3px solid #8a5cc0;
   box-shadow:0 0 30px rgba(180,92,255,.5), inset 0 0 20px rgba(180,92,255,.3);
-  flex-shrink:0;
+  flex-shrink:0;overflow:hidden;
 }
+.prof-avatar .vk-avatar-img{width:100%;height:100%;object-fit:cover}
 .prof-title{
   text-align:center;font-size:17px;font-weight:900;letter-spacing:1px;
-  color:#ffd75e;text-shadow:0 0 20px rgba(255,190,60,.5);
-  margin-bottom:3px;
+  color:#ffd75e;text-shadow:0 0 20px rgba(255,190,60,.5);margin-bottom:3px;
 }
 .prof-desc{
   text-align:center;font-size:11px;color:#b8a8c8;
   margin-bottom:12px;font-style:italic;
 }
+.vk-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:800;color:#7aa7ff;
+  padding:2px 7px;border-radius:20px;
+  background:rgba(74,158,255,.12);
+  border:1px solid rgba(74,158,255,.35);
+  margin-left:6px;font-style:normal;
+}
 .prof-stats{
-  display:grid;grid-template-columns:1fr 1fr;gap:6px;
-  margin-bottom:12px;
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;
 }
 .prof-stat{
   background:rgba(255,255,255,.04);
@@ -377,12 +331,10 @@ body{
   text-shadow:0 0 10px rgba(180,92,255,.4);
 }
 .prof-stat .val.gold{color:#ffd75e;text-shadow:0 0 10px rgba(255,190,60,.4)}
-.prof-stat .val.green{color:#7bf0a4;text-shadow:0 0 10px rgba(90,255,140,.4)}
 
 .titles-h{
   margin:6px 0 8px;font-size:11px;letter-spacing:2px;
-  color:#9fe8b3;font-weight:800;text-align:center;
-  text-transform:uppercase;
+  color:#9fe8b3;font-weight:800;text-align:center;text-transform:uppercase;
 }
 .titles-grid{
   display:grid;grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
@@ -396,14 +348,12 @@ body{
   padding:7px 4px;border-radius:9px;
   background:rgba(255,255,255,.03);
   border:1.5px solid rgba(180,92,255,.15);
-  text-align:center;
-  transition:.15s;
+  text-align:center;transition:.15s;
 }
 .title-chip.locked{opacity:.35;filter:grayscale(80%)}
 .title-chip.unlocked{
   background:linear-gradient(180deg,rgba(180,92,255,.12),rgba(180,92,255,.04));
-  border-color:rgba(180,92,255,.5);
-  box-shadow:0 0 14px rgba(180,92,255,.2);
+  border-color:rgba(180,92,255,.5);box-shadow:0 0 14px rgba(180,92,255,.2);
 }
 .title-chip.current{
   border-color:#ffd75e;
@@ -411,14 +361,42 @@ body{
   box-shadow:0 0 18px rgba(255,190,60,.4);
 }
 .title-chip .t-icn{font-size:19px;line-height:1}
-.title-chip .t-name{
-  font-size:10px;font-weight:800;letter-spacing:.2px;
-  color:#dcc5ff;line-height:1.15;
-}
+.title-chip .t-name{font-size:10px;font-weight:800;letter-spacing:.2px;color:#dcc5ff;line-height:1.15}
 .title-chip.current .t-name{color:#ffd75e}
-.title-chip .t-req{
-  font-size:9px;color:#8fae94;font-weight:600;
+.title-chip .t-req{font-size:9px;color:#8fae94;font-weight:600}
+
+/* VK PANEL */
+.vk-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-top:6px;margin-bottom:4px;
 }
+.vk-btn{
+  padding:10px 8px;border-radius:10px;
+  border:1.5px solid rgba(120,170,255,.5);
+  background:linear-gradient(180deg,#1a2a55,#0e1a35);
+  color:#b8d0ff;font-size:11.5px;font-weight:800;
+  letter-spacing:.4px;cursor:pointer;font-family:inherit;
+  transition:.15s;touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.vk-btn:active{transform:scale(.97);filter:brightness(1.2)}
+.vk-btn:disabled{opacity:.4;cursor:not-allowed}
+.vk-btn .i{font-size:15px}
+.vk-btn.gold{
+  border-color:rgba(255,200,60,.5);
+  background:linear-gradient(180deg,#3a2e12,#1d180a);
+  color:#ffe0a0;
+}
+.vk-save-row{
+  display:flex;gap:6px;align-items:center;justify-content:center;
+  margin-top:8px;font-size:10.5px;color:#8fae94;
+}
+.vk-save-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.8);
+  animation:savePulse 2s ease-in-out infinite;
+}
+@keyframes savePulse{0%,100%{opacity:.5}50%{opacity:1}}
 
 #closeProfBtn{
   margin-top:10px;padding:12px;border-radius:10px;
@@ -426,16 +404,14 @@ body{
   background:linear-gradient(180deg,#241a30,#170f20);
   color:#c8b8d8;font-size:12px;font-weight:800;letter-spacing:1.5px;
   cursor:pointer;font-family:inherit;transition:.15s;
-  text-transform:uppercase;
-  flex-shrink:0;
-  touch-action:manipulation;
+  text-transform:uppercase;flex-shrink:0;touch-action:manipulation;
 }
 #closeProfBtn:active{border-color:#8a5cc0;color:#e0d0f0;transform:scale(.98)}
 
 /* BOTTOM SHEET */
 .sheet-back{
-  position:fixed;inset:0;background:rgba(2,5,3,.78);backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);
+  position:fixed;inset:0;background:rgba(2,5,3,.78);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   z-index:9999;opacity:0;pointer-events:none;transition:.25s;
 }
 .sheet-back.show{opacity:1;pointer-events:auto}
@@ -455,8 +431,7 @@ body{
 .sheet-handle{
   width:40px;height:4px;border-radius:2px;
   background:#4a2e6e;margin:0 auto 8px;
-  box-shadow:0 0 8px rgba(180,92,255,.4);
-  flex-shrink:0;
+  box-shadow:0 0 8px rgba(180,92,255,.4);flex-shrink:0;
 }
 .sheet-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -464,8 +439,7 @@ body{
 }
 .sheet-header h2{
   margin:0;font-size:14px;letter-spacing:2px;
-  color:#dcc5ff;text-shadow:0 0 16px rgba(180,92,255,.5);
-  font-weight:800;
+  color:#dcc5ff;text-shadow:0 0 16px rgba(180,92,255,.5);font-weight:800;
 }
 .sheet-close{
   width:32px;height:32px;border-radius:50%;
@@ -474,9 +448,7 @@ body{
   color:#dcc5ff;font-size:14px;font-weight:800;
   cursor:pointer;transition:.15s;
   display:flex;align-items:center;justify-content:center;
-  font-family:inherit;
-  touch-action:manipulation;
-  flex-shrink:0;
+  font-family:inherit;touch-action:manipulation;flex-shrink:0;
 }
 .sheet-close:active{background:rgba(255,60,60,.15);border-color:#c94a4a;color:#ffb3b3;transform:scale(.92)}
 
@@ -491,18 +463,14 @@ body{
 .loot-item{
   display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;
   background:rgba(255,255,255,.035);border-left:4px solid #666;
-  animation:lootIn .4s cubic-bezier(.2,1.6,.5,1) backwards;
-  flex-shrink:0;
+  animation:lootIn .4s cubic-bezier(.2,1.6,.5,1) backwards;flex-shrink:0;
 }
 @keyframes lootIn{from{opacity:0;transform:translateX(-22px) scale(.9)}}
 .li-icon{
-  font-size:22px;line-height:1;
-  width:34px;height:34px;
+  font-size:22px;line-height:1;width:34px;height:34px;
   display:flex;align-items:center;justify-content:center;
-  border-radius:8px;
-  background:rgba(0,0,0,.3);
-  filter:drop-shadow(0 0 8px currentColor);
-  flex-shrink:0;
+  border-radius:8px;background:rgba(0,0,0,.3);
+  filter:drop-shadow(0 0 8px currentColor);flex-shrink:0;
 }
 .li-info{flex:1;min-width:0}
 .li-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -520,8 +488,7 @@ body{
 .inv-item{
   display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;
   background:rgba(255,255,255,.04);border-left:3px solid #666;
-  transition:.15s;
-  flex-shrink:0;
+  transition:.15s;flex-shrink:0;
 }
 .inv-item .li-icon{font-size:19px;width:30px;height:30px}
 .inv-item .li-info{flex:1;min-width:0}
@@ -534,29 +501,26 @@ body{
 .sell-btn{
   padding:5px 8px;border-radius:6px;cursor:pointer;font-size:10.5px;font-weight:800;
   background:linear-gradient(180deg,#3a5a24,#1f3a12);color:#c8ffa0;
-  border:1.5px solid #4a7a30;font-family:inherit;transition:.15s;white-space:nowrap;
-  touch-action:manipulation;
+  border:1.5px solid #4a7a30;font-family:inherit;transition:.15s;
+  white-space:nowrap;touch-action:manipulation;
 }
 .sell-btn:active{transform:scale(.94);filter:brightness(1.2)}
 
 .inv-stats{
-  text-align:center;font-size:11px;color:#b8a8c8;margin-bottom:8px;letter-spacing:.3px;
-  flex-shrink:0;
+  text-align:center;font-size:11px;color:#b8a8c8;margin-bottom:8px;
+  letter-spacing:.3px;flex-shrink:0;
 }
 .inv-stats b{color:#ffd75e;font-size:12px}
 
 .modal-total{
   text-align:center;margin-top:10px;font-size:13px;font-weight:800;color:#ffd75e;
-  min-height:18px;text-shadow:0 0 12px rgba(255,200,60,.4);
-  flex-shrink:0;
+  min-height:18px;text-shadow:0 0 12px rgba(255,200,60,.4);flex-shrink:0;
 }
 #takeBtn, #sellAllBtn{
   margin-top:10px;padding:12px;border-radius:10px;border:2px solid #4f8a5e;
   background:linear-gradient(180deg,#2a8f4d,#186331);color:#eaffe9;
   font-size:14px;font-weight:800;letter-spacing:1.8px;cursor:pointer;
-  font-family:inherit;transition:.15s;
-  touch-action:manipulation;
-  flex-shrink:0;
+  font-family:inherit;transition:.15s;touch-action:manipulation;flex-shrink:0;
 }
 #takeBtn:active, #sellAllBtn:active{transform:scale(.98);filter:brightness(1.15)}
 #takeBtn:disabled, #sellAllBtn:disabled{opacity:.4;cursor:wait}
@@ -599,9 +563,6 @@ body{
   80%{transform:translate(3px,3px)}
 }
 
-/* =====================================================
-   ПОРТРЕТНАЯ ОРИЕНТАЦИЯ 9:16 — основной целевой режим
-   ===================================================== */
 @media (orientation: portrait){
   .hud{padding:5px 7px;min-height:42px;gap:4px}
   .hud-left{gap:5px}
@@ -610,27 +571,19 @@ body{
   .lvl-badge .icn{font-size:12px}
   .pity{font-size:9px}
   .pity-bar{width:60px}
-
-  .stat{display:none}
-  .stat.show-mobile{display:none}
-
   .dock{padding:5px 5px calc(5px + env(safe-area-inset-bottom));gap:3px}
   .dock-btn{min-height:52px;padding:5px 3px;border-radius:10px}
   .dock-btn .icn{font-size:18px}
   .dock-btn .lbl{font-size:8.5px}
   .dock-btn .sub{font-size:8px}
   .dock-btn-wrap{max-width:72px}
-
   .cast{bottom:calc(74px + env(safe-area-inset-bottom));width:min(280px,86vw)}
   .cast-label{font-size:11px}
-
   .mush{width:66px;height:74px}
   .slug{width:64px;height:38px}
   .speech-bubble{font-size:10px;padding:5px 8px;max-width:140px}
-
   .toasts{max-width:min(280px,76vw)}
   .toast{font-size:11px;padding:6px 10px}
-
   .modal{padding:12px;border-radius:14px}
   .modal h2{font-size:14px;margin-bottom:8px}
   .prof-avatar{width:62px;height:62px;font-size:34px}
@@ -639,27 +592,20 @@ body{
   .title-chip .t-icn{font-size:17px}
   .title-chip .t-name{font-size:9.5px}
 }
-
-/* Очень узкие экраны (9:16 с малым width, например 360×640) */
 @media (orientation: portrait) and (max-width:400px){
-  .hud-left .stat, .hud-left .lvl-badge span:not(.icn){font-size:10px}
-  .lvl-badge span:not(.icn){max-width:70px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle;white-space:nowrap}
+  .lvl-badge span:not(.icn){max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .dock-btn .lbl{font-size:8px}
   .dock-btn-wrap{max-width:66px}
   .dock-btn{min-height:48px;padding:4px 2px}
   .dock-btn .icn{font-size:17px}
   .dock-btn .sub{font-size:7.5px}
 }
-
-/* Широкие телефоны — типовая 9:16 (например 414×736) */
 @media (orientation: portrait) and (min-width:401px){
   .mush{width:72px;height:80px}
   .dock-btn .icn{font-size:20px}
   .dock-btn .lbl{font-size:9px}
   .dock-btn-wrap{max-width:78px}
 }
-
-/* Ландшафт для мобильных — оставляем компактно */
 @media (orientation: landscape) and (max-height:500px){
   .hud{padding:4px 10px;min-height:36px}
   .coin{font-size:12px}
@@ -697,37 +643,29 @@ body{
   <div class="dock">
     <div class="dock-btn-wrap">
       <button class="dock-btn" id="shopBox">
-        <span class="icn">🎁</span>
-        <span class="lbl">Ящик</span>
-        <span class="sub">50 $</span>
+        <span class="icn">🎁</span><span class="lbl">Ящик</span><span class="sub">50 $</span>
       </button>
     </div>
     <div class="dock-btn-wrap">
       <button class="dock-btn gold" id="shopRitual">
-        <span class="icn">⭐</span>
-        <span class="lbl">Ритуал</span>
-        <span class="sub">120 $</span>
+        <span class="icn">⭐</span><span class="lbl">Ритуал</span><span class="sub">120 $</span>
       </button>
     </div>
     <div class="dock-btn-wrap">
       <button class="dock-btn danger" id="shopRisk">
-        <span class="icn">☠️</span>
-        <span class="lbl">Риск</span>
-        <span class="sub">300 $</span>
+        <span class="icn">☠️</span><span class="lbl">Риск</span><span class="sub">300 $</span>
       </button>
     </div>
     <div class="dock-sep"></div>
     <div class="dock-btn-wrap">
       <button class="dock-btn purple" id="invBtn">
-        <span class="icn">🎒</span>
-        <span class="lbl">Рюкзак</span>
+        <span class="icn">🎒</span><span class="lbl">Рюкзак</span>
         <span class="badge" id="invBadge" style="display:none">0</span>
       </button>
     </div>
     <div class="dock-btn-wrap">
       <button class="dock-btn purple" id="profBtn">
-        <span class="icn">👤</span>
-        <span class="lbl">Профиль</span>
+        <span class="icn">👤</span><span class="lbl">Профиль</span>
       </button>
     </div>
   </div>
@@ -769,6 +707,20 @@ body{
     <div class="prof-title" id="profTitle">Новичок</div>
     <div class="prof-desc" id="profDesc">Начало пути</div>
     <div class="prof-stats" id="profStats"></div>
+
+    <div class="vk-actions" id="vkActions" style="display:none">
+      <button class="vk-btn" id="vkShareBtn">
+        <span class="i">📢</span> Поделиться
+      </button>
+      <button class="vk-btn gold" id="vkAdBtn">
+        <span class="i">🎬</span> +200 $ реклама
+      </button>
+    </div>
+    <div class="vk-save-row" id="vkSaveRow" style="display:none">
+      <span class="vk-save-dot"></span>
+      <span id="vkSaveText">Автосохранение в ВК</span>
+    </div>
+
     <h3 class="titles-h">🏆 ЗВАНИЯ</h3>
     <div class="titles-grid" id="titlesGrid"></div>
     <button id="closeProfBtn">ЗАКРЫТЬ</button>
@@ -776,6 +728,239 @@ body{
 </div>
 
 <script>
+/* =========================================================
+   VK BRIDGE
+   ========================================================= */
+const VK = {
+  bridge: null,
+  user: null,
+  ready: false,
+  inVK: false,
+  storageKey: 'gribnik_ludoman_save_v1',
+  lastSave: 0,
+  saving: false,
+};
+
+async function initVK(){
+  try{
+    if(typeof vkBridge === 'undefined'){
+      console.log('[VK] Bridge не загружен — работаем локально');
+      return;
+    }
+    VK.bridge = vkBridge;
+
+    try{
+      await VK.bridge.send('VKWebAppInit');
+      VK.inVK = true;
+    }catch(e){
+      console.log('[VK] Не в контексте ВК:', e?.error_type || e);
+      VK.bridge = null;
+      return;
+    }
+
+    try{
+      const u = await VK.bridge.send('VKWebAppGetUserInfo');
+      VK.user = u;
+      VK.ready = true;
+      applyVKUser();
+      const vkActions = document.getElementById('vkActions');
+      const vkSaveRow = document.getElementById('vkSaveRow');
+      if(vkActions) vkActions.style.display = '';
+      if(vkSaveRow) vkSaveRow.style.display = '';
+    }catch(e){
+      console.log('[VK] Нет данных пользователя');
+    }
+
+    try{
+      VK.bridge.subscribe(ev => {
+        const t = ev?.detail?.type;
+        if(t === 'VKWebAppUpdateConfig') applyVKTheme(ev.detail.data);
+        if(t === 'VKWebAppViewRestore') loadVKSave(true);
+        if(t === 'VKWebAppViewHide') saveVK(true);
+      });
+    }catch(e){}
+
+    await loadVKSave(true);
+
+    // Автосохранение каждые 15 секунд
+    setInterval(() => {
+      if(VK.ready && Date.now() - VK.lastSave > 14000) saveVK(true);
+    }, 15000);
+
+  }catch(err){
+    console.log('[VK] Ошибка инициализации:', err);
+  }
+}
+
+function applyVKUser(){
+  if(!VK.user) return;
+  const av = document.getElementById('profAvatar');
+  if(av && VK.user.photo_100){
+    av.innerHTML = `<img class="vk-avatar-img" src="${VK.user.photo_100}" alt="">`;
+    av.style.background = 'none';
+    av.style.padding = '0';
+    av.style.overflow = 'hidden';
+  }
+  const desc = document.getElementById('profDesc');
+  if(desc && !document.getElementById('vkUserNameBadge')){
+    const badge = document.createElement('span');
+    badge.id = 'vkUserNameBadge';
+    badge.className = 'vk-badge';
+    badge.textContent = '⭐ ' + (VK.user.first_name || 'ВК');
+    desc.appendChild(badge);
+  }
+}
+
+function applyVKTheme(cfg){
+  const scheme = cfg?.scheme;
+  if(scheme === 'bright') document.body.style.background = '#1a2b1f';
+  else document.body.style.background = '';
+}
+
+async function saveVK(silent){
+  if(!VK.bridge || !VK.ready || VK.saving) return false;
+  VK.saving = true;
+  const data = {
+    coins: state.coins,
+    picks: state.picks,
+    pity: state.pity,
+    maxCoins: state.maxCoins,
+    best: state.best,
+    bestRarity: state.bestRarity,
+    bestColor: state.bestColor,
+    inventory: state.inventory,
+    everOwned: state.everOwned,
+    legendaries: state.legendaries,
+    mythics: state.mythics,
+    criticsReceived: state.criticsReceived,
+    spitsReceived: state.spitsReceived,
+    mushroomsFled: state.mushroomsFled,
+    _lastTitleId: state._lastTitleId,
+    _ts: Date.now(),
+  };
+  try{
+    await VK.bridge.send('VKWebAppStorageSet', {
+      key: VK.storageKey,
+      value: JSON.stringify(data)
+    });
+    VK.lastSave = Date.now();
+    if(!silent){
+      const txt = document.getElementById('vkSaveText');
+      if(txt){
+        txt.textContent = '☁️ Сохранено в ВК';
+        setTimeout(()=>{ txt.textContent = 'Автосохранение в ВК'; }, 2000);
+      }
+    }
+    VK.saving = false;
+    return true;
+  }catch(e){
+    console.log('[VK] Ошибка сохранения:', e);
+    VK.saving = false;
+    return false;
+  }
+}
+
+async function loadVKSave(silent){
+  if(!VK.bridge) return false;
+  try{
+    const res = await VK.bridge.send('VKWebAppStorageGet', {
+      keys: [VK.storageKey]
+    });
+    const keys = res?.keys || [];
+    const found = keys.find(k => k.key === VK.storageKey);
+    if(found && found.value){
+      const data = JSON.parse(found.value);
+      if(typeof data.coins === 'number')        state.coins = data.coins;
+      if(typeof data.picks === 'number')        state.picks = data.picks;
+      if(typeof data.pity === 'number')         state.pity = data.pity;
+      if(typeof data.maxCoins === 'number')     state.maxCoins = data.maxCoins;
+      if(data.best)                             state.best = data.best;
+      if(data.bestRarity)                       state.bestRarity = data.bestRarity;
+      if(data.bestColor)                        state.bestColor = data.bestColor;
+      if(data.inventory && typeof data.inventory === 'object')
+                                                state.inventory = data.inventory;
+      if(data.everOwned && typeof data.everOwned === 'object')
+                                                state.everOwned = data.everOwned;
+      if(typeof data.legendaries === 'number')  state.legendaries = data.legendaries;
+      if(typeof data.mythics === 'number')      state.mythics = data.mythics;
+      if(typeof data.criticsReceived === 'number')
+                                                state.criticsReceived = data.criticsReceived;
+      if(typeof data.spitsReceived === 'number')state.spitsReceived = data.spitsReceived;
+      if(typeof data.mushroomsFled === 'number')state.mushroomsFled = data.mushroomsFled;
+      if(data._lastTitleId)                     state._lastTitleId = data._lastTitleId;
+      updateHud();
+      if(!silent) toast('☁️ Прогресс загружен из ВК', '#4ade80');
+      return true;
+    } else if(!silent){
+      toast('🆕 Новый игрок в ВК', '#7de89a');
+    }
+  }catch(e){
+    console.log('[VK] Ошибка загрузки:', e);
+  }
+  return false;
+}
+
+async function showVKRewardAd(){
+  if(!VK.bridge){
+    toast('Реклама доступна только в ВК', '#ffb020');
+    return;
+  }
+  try{
+    const res = await VK.bridge.send('VKWebAppShowNativeAds', {
+      format: 'reward'
+    });
+    if(res?.result){
+      addCoins(200);
+      toast('🎬 Реклама просмотрена: +200 $', '#4ade80');
+      flash('#4ade80');
+      beep(660,.1,'sine',.05);
+      setTimeout(()=>beep(880,.14,'sine',.05),100);
+      saveVK(true);
+    } else {
+      toast('Реклама не завершена', '#ffb020');
+    }
+  }catch(e){
+    console.log('[VK] Ошибка рекламы:', e);
+    toast('Реклама недоступна', '#ffb020');
+  }
+}
+
+async function shareVK(){
+  if(!VK.bridge){
+    toast('Поделиться можно только в ВК', '#ffb020');
+    return;
+  }
+  const cur = getCurrentTitle();
+  const lines = [
+    '🍄 Я грибник-лудоман!',
+    `📊 Сборов: ${fmt(state.picks)}`,
+    `💰 Заработано: ${fmt(state.coins)} $`,
+    `🏆 Звание: ${cur.icon} ${cur.name}`,
+  ];
+  if(state.legendaries > 0) lines.push(`🔥 Легендарок: ${state.legendaries}`);
+  if(state.mythics > 0)     lines.push(`🌌 Мификов: ${state.mythics}`);
+  lines.push('');
+  lines.push('Попробуй побить мой рекорд!');
+
+  try{
+    await VK.bridge.send('VKWebAppShowWallPostBox', {
+      message: lines.join('\n'),
+    });
+    toast('✅ Опубликовано!', '#4ade80');
+  }catch(e){
+    if(e?.error_type !== 'UserCancel'){
+      console.log('[VK] Ошибка публикации:', e);
+    }
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  if(VK.ready) saveVK(true);
+});
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden && VK.ready) saveVK(true);
+});
+
 /* =========================================================
    РЕДКОСТИ
    ========================================================= */
@@ -878,8 +1063,8 @@ mythic: [
 };
 
 const BASE_WEIGHTS = {
-  common:    56, uncommon:  26, rare:      13,
-  epic:      4.4, legendary: 0.5, mythic:    0.06,
+  common: 56, uncommon: 26, rare: 13,
+  epic: 4.4, legendary: 0.5, mythic: 0.06,
 };
 
 const TITLES = [
@@ -898,7 +1083,7 @@ const TITLES = [
   { id:'patient',  name:'Терпеливый',          icon:'😤', req:s=>s.criticsReceived>=20,             desc:'20 критик' },
   { id:'stoic',    name:'Стоик',               icon:'🧘', req:s=>s.criticsReceived>=50,             desc:'50 критик' },
   { id:'spit',     name:'Плюнутый',            icon:'💦', req:s=>s.spitsReceived>=10,               desc:'10 плевков' },
-  { id:'slugfood', name:'Убегающий',           icon:'💨', req:s=>s.mushroomsFled>=20,               desc:'20 побегов грибов' },
+  { id:'slugfood', name:'Убегающий',           icon:'💨', req:s=>s.mushroomsFled>=20,               desc:'20 побегов' },
   { id:'luck',     name:'Везунчик',            icon:'🍀', req:s=>s.legendaries>=1,                  desc:'Найти легендарку' },
   { id:'mythhunter',name:'Мифический охотник', icon:'🌌', req:s=>s.mythics>=1,                      desc:'Найти мифик' },
   { id:'god',      name:'ГРИБНОЙ БОГ',         icon:'👑', req:s=>s.picks>=500&&s.mythics>=1,        desc:'500 сборов + мифик' },
@@ -969,8 +1154,6 @@ const modalTotal = document.getElementById('modalTotal');
 const takeBtn    = document.getElementById('takeBtn');
 const toastsBox  = document.getElementById('toasts');
 const coinsEl    = document.getElementById('coins');
-const picksEl    = document.getElementById('picks');
-const bestEl     = document.getElementById('best');
 const lvlEl      = document.getElementById('lvl');
 const lvlIcon    = document.getElementById('lvlIcon');
 const lvlBadge   = document.getElementById('lvlBadge');
@@ -994,7 +1177,7 @@ const titlesGrid = document.getElementById('titlesGrid');
 const closeProfBtn = document.getElementById('closeProfBtn');
 
 /* =========================================================
-   ДЕКОР (адаптивный)
+   ДЕКОР
    ========================================================= */
 (function decorate(){
   const small = window.innerWidth < 500;
@@ -1096,9 +1279,16 @@ function getCurrentTitle(){
 }
 function renderProfile(){
   const cur = getCurrentTitle();
-  profAvatar.textContent = cur.icon;
-  profTitle.textContent  = cur.name;
-  profDesc.textContent   = cur.desc;
+  // Аватарку не перезаписываем, если VK-аватар уже стоит
+  if(!VK.user){
+    profAvatar.textContent = cur.icon;
+  }
+  profTitle.textContent = cur.name;
+  // Профиль-описание сохраняем, если есть VK-бейдж
+  const vkBadge = document.getElementById('vkUserNameBadge');
+  if(!vkBadge){
+    profDesc.textContent = cur.desc;
+  }
 
   const totalItems = invTotalCount();
   const invValue = invTotalValue();
@@ -1139,6 +1329,7 @@ function checkTitleUnlock(){
     fanfare(); flash('#ffd75e');
     toast(`🏆 НОВОЕ ЗВАНИЕ: ${cur.icon} ${cur.name}`, '#ffd75e');
     screenShake();
+    if(VK.ready) saveVK(true);
   }
 }
 
@@ -1157,12 +1348,6 @@ function invTotalValue(){
 }
 function updateHud(){
   coinsEl.textContent = fmt(state.coins);
-  if(picksEl) picksEl.textContent = fmt(state.picks);
-  if(bestEl){
-    bestEl.textContent = state.best ? state.best : '—';
-    bestEl.style.color = state.bestColor;
-  }
-
   const cur = getCurrentTitle();
   lvlEl.textContent = cur.name;
   lvlIcon.textContent = cur.icon;
@@ -1248,6 +1433,7 @@ function renderInventory(){
       e.stopPropagation();
       sellFromInventory(btn.dataset.key, 1);
       beep(700, .05, 'triangle', .03);
+      if(VK.ready) saveVK(true);
     });
   });
 }
@@ -1357,7 +1543,6 @@ function spawnMushroom(){
   if(countRegular() >= MAX_REGULAR_MUSHROOMS) return;
 
   const id = ++state.mushId;
-  // На телефоне — более ограниченные отступы, чтобы грибы не уходили под док
   const small = window.innerWidth < 500;
   const xMin = small ? 12 : 10, xMax = small ? 88 : 90;
   const yMin = small ? 22 : 26, yMax = small ? 86 : 88;
@@ -1394,8 +1579,6 @@ function spawnEyesMushroom(){
   if(document.querySelector('.mush.eyes')) return;
 
   const id = ++state.mushId;
-  const small = window.innerWidth < 500;
-
   const edge = Math.floor(Math.random() * 4);
   let x, y;
   if(edge === 0){        x = rnd(16, 84); y = rnd(24, 32); }
@@ -1480,7 +1663,7 @@ function mushroomFlee(m, sourceLabel){
 }
 
 /* =========================================================
-   ГЛАЗАСТЫЙ: КРИТИКА (10с) + ПЛЕВКИ
+   ГЛАЗАСТЫЙ
    ========================================================= */
 function startEyesCriticism(m){
   const bubble = m.el.querySelector('[data-eye-bubble]');
@@ -1792,6 +1975,8 @@ function finishCast(){
   if(Math.random() < 0.22){
     toast(TICKER[Math.floor(Math.random()*TICKER.length)]);
   }
+
+  if(VK.ready) saveVK(true);
 }
 
 function rollRarity(){
@@ -1811,6 +1996,8 @@ function rollRarity(){
   if(r === 'legendary') state.legendaries++;
   if(r === 'mythic')    state.mythics++;
   updateHud();
+
+  if(VK.ready && (r === 'legendary' || r === 'mythic')) saveVK(true);
   return r;
 }
 function makeItem(rarity){
@@ -1893,6 +2080,7 @@ takeBtn.addEventListener('click', () => {
   modalBack.classList.remove('show');
   state.modalOpen = false;
   beep(400, .06, 'sine', .03);
+  if(VK.ready) saveVK(true);
 });
 
 /* =========================================================
@@ -1922,6 +2110,7 @@ sellAllBtn.addEventListener('click', () => {
     toast(`💰 Продано за ${fmt(gained)} $`, '#ffd75e');
     beep(700, .1, 'triangle', .045);
     setTimeout(()=>beep(900, .12, 'triangle', .04), 100);
+    if(VK.ready) saveVK(true);
   }
 });
 
@@ -1945,6 +2134,10 @@ profBack.addEventListener('click', (e) => {
   }
 });
 
+/* VK-кнопки */
+document.getElementById('vkShareBtn').addEventListener('click', shareVK);
+document.getElementById('vkAdBtn').addEventListener('click', showVKRewardAd);
+
 /* =========================================================
    МАГАЗИН
    ========================================================= */
@@ -1966,6 +2159,7 @@ document.getElementById('shopBox').addEventListener('click', () => {
   const items = [];
   for(let i=0;i<n;i++) items.push(rollItem());
   openLoot(items, `🎁 ЯЩИК · ${n} шт.`);
+  if(VK.ready) saveVK(true);
 });
 document.getElementById('shopRitual').addEventListener('click', () => {
   if(state.modalOpen) return;
@@ -1975,6 +2169,7 @@ document.getElementById('shopRitual').addEventListener('click', () => {
   beep(700, .12, 'sine', .045);
   setTimeout(()=>beep(900, .16, 'sine', .045), 120);
   flash('#b45cff');
+  if(VK.ready) saveVK(true);
 });
 document.getElementById('shopRisk').addEventListener('click', () => {
   if(state.modalOpen) return;
@@ -1990,6 +2185,7 @@ document.getElementById('shopRisk').addEventListener('click', () => {
       openLoot([], '☠️ РИСК-ГРИБ');
       toast('💀 Проиграл 300 $.', '#ff7b7b');
     }
+    if(VK.ready) saveVK(true);
   }, 350);
 });
 
@@ -2027,10 +2223,8 @@ setTimeout(()=>toast('👁️ Глазастый гриб критикует и 
 
 updateHud();
 
-/* Дополнительно: при повороте экрана — пересчитать положение грибов в допустимых границах */
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
-    // Подстройка позиций грибов под новые размеры
     mushrooms.forEach(m => {
       m.x = Math.max(10, Math.min(90, m.x));
       m.y = Math.max(22, Math.min(86, m.y));
@@ -2038,6 +2232,13 @@ window.addEventListener('orientationchange', () => {
       m.el.style.top  = m.y + '%';
     });
   }, 300);
+});
+
+/* =========================================================
+   СТАРТ VK BRIDGE
+   ========================================================= */
+window.addEventListener('load', () => {
+  setTimeout(initVK, 200);
 });
 </script>
 </body>
