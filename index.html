@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050a06">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🍄 Грибник-Лудоман</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+body{
+  margin:0;font-family:'Segoe UI',system-ui,sans-serif;
+  background:#050a06;color:#e8f0e8;
+  user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;
+  position:fixed;inset:0;
+}
+.wrap{
+  display:flex;flex-direction:column;
+  height:100vh;
+  height:100dvh;   /* динамическая высота под мобильные браузеры */
+  width:100%;
+  position:relative;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ================= HUD ================= */
+.hud{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  padding:6px 8px;
+  background:linear-gradient(180deg,#0e1a12,#0a130d);
+  border-bottom:2px solid #1e3524;z-index:20;
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+  flex-shrink:0;
+  min-height:46px;
+}
+.hud-left{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0;overflow:hidden}
+.coin{
+  font-size:14px;font-weight:800;color:#ffd75e;
+  text-shadow:0 0 10px rgba(255,200,60,.45);letter-spacing:.3px;
+  padding:3px 8px;border-radius:7px;background:rgba(255,200,60,.06);
+  border:1.5px solid rgba(255,200,60,.15);
+  flex-shrink:0;
+}
+.coin.pop{animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+.stat{font-size:10.5px;color:#8fae94;letter-spacing:.2px;white-space:nowrap;display:none}
+.stat b{color:#cfe8cf;font-size:11px}
+.stat.show-mobile{display:inline}
+.pity{
+  display:flex;align-items:center;gap:5px;font-size:10px;color:#8fae94;
+  flex-shrink:0;margin-left:auto;
+}
+.pity-bar{
+  width:70px;height:7px;border-radius:4px;background:#0b120d;
+  border:1px solid #24382a;overflow:hidden;flex-shrink:0;
+}
+.pity-bar i{
+  display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#b45cff,#ffb020,#ff3b3b);
+  transition:width .25s;
+}
+.lvl-badge{
+  display:flex;align-items:center;gap:4px;
+  font-size:11px;color:#e8d0ff;font-weight:800;
+  padding:3px 8px;border-radius:7px;
+  background:linear-gradient(180deg,rgba(180,92,255,.15),rgba(180,92,255,.05));
+  border:1.5px solid rgba(180,92,255,.3);
+  cursor:pointer;transition:.15s;
+  white-space:nowrap;
+  flex-shrink:0;
+  max-width:120px;overflow:hidden;text-overflow:ellipsis;
+}
+.lvl-badge .icn{font-size:13px;flex-shrink:0}
+
+/* ================= FIELD ================= */
+.field{
+  position:relative;flex:1;overflow:hidden;cursor:crosshair;
+  isolation:isolate;min-height:0;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -5%, #16351f 0%, transparent 65%),
+    radial-gradient(ellipse 100% 60% at 50% 115%, #1c4026 0%, transparent 70%),
+    linear-gradient(180deg,#07120b 0%,#0b1a10 45%,#12291a 100%);
+}
+.field::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:
+    repeating-linear-gradient(78deg, transparent 0 22px, rgba(60,140,80,.10) 22px 24px),
+    repeating-linear-gradient(-72deg, transparent 0 31px, rgba(40,110,60,.09) 31px 33px);
+}
+.trees{position:absolute;top:0;left:0;right:0;height:110px;pointer-events:none;z-index:1}
+.tree{
+  position:absolute;bottom:0;width:0;height:0;
+  border-left:30px solid transparent;border-right:30px solid transparent;
+  border-bottom:100px solid #06110a;filter:blur(.4px);
+}
+.tree.s{border-left-width:20px;border-right-width:20px;border-bottom-color:#08150c}
+.tree.xs{border-left-width:14px;border-right-width:14px;border-bottom-color:#0a1a0f}
+
+.fly{
+  position:absolute;width:4px;height:4px;border-radius:50%;
+  background:#d9ff8a;box-shadow:0 0 10px 2px rgba(190,255,110,.7);
+  pointer-events:none;animation:fly 9s ease-in-out infinite;
+}
+@keyframes fly{
+  0%,100%{transform:translate(0,0);opacity:.15}
+  25%{transform:translate(35px,-55px);opacity:.95}
+  50%{transform:translate(-25px,-100px);opacity:.35}
+  75%{transform:translate(55px,-40px);opacity:.9}
+}
+
+/* ================= MUSHROOM ================= */
+.mush{
+  position:absolute;width:72px;height:80px;cursor:pointer;
+  transform:translate(-50%,-100%) scale(var(--s,1));
+  transform-origin:bottom center;
+  transition:filter .15s;
+  animation:spawnIn .45s cubic-bezier(.2,1.6,.5,1) backwards;
+  /* увеличенная зона тапа */
+  padding:0;
+  touch-action:manipulation;
+}
+@keyframes spawnIn{from{opacity:0;transform:translate(-50%,-100%) scale(.2)}}
+.mush-inner{width:100%;height:100%;transition:transform .16s ease;position:relative}
+.mush:active .mush-inner{transform:translateY(-2px) scale(1.02)}
+.msvg{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+.mush.casting{animation:shake .18s linear infinite}
+@keyframes shake{0%,100%{margin-left:0}25%{margin-left:-3px}75%{margin-left:3px}}
+.mush.escape{transition:transform .6s ease-in, opacity .6s;transform:translate(120px,-100%) scale(.4) rotate(30deg);opacity:0}
+.mush.fleeing{transition:left .55s cubic-bezier(.4,1.4,.5,1), top .55s cubic-bezier(.4,1.4,.5,1), filter .3s}
+.mush.fleeing .msvg{animation:hop .55s ease}
+@keyframes hop{
+  0%{transform:translateY(0) scale(1)}
+  40%{transform:translateY(-24px) scale(1.08)}
+  100%{transform:translateY(0) scale(1)}
+}
+
+.mush.eyes{
+  cursor:default;
+  pointer-events:auto;
+}
+.mush.eyes .msvg{
+  filter:drop-shadow(0 0 14px rgba(255,220,80,.6)) drop-shadow(0 6px 8px rgba(0,0,0,.55));
+  animation:eyesGlow 2.4s ease-in-out infinite alternate;
+}
+@keyframes eyesGlow{
+  from{filter:drop-shadow(0 0 10px rgba(255,220,80,.4)) drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+  to{filter:drop-shadow(0 0 22px rgba(255,220,80,.85)) drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+}
+.mush.eyes.puffing .msvg{animation:eyesGlow 2.4s ease-in-out infinite alternate, puff .6s ease}
+@keyframes puff{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.18) rotate(-3deg)}
+  100%{transform:scale(1)}
+}
+
+/* ================= SLUG ================= */
+.slug{
+  position:absolute;width:70px;height:42px;
+  transform:translate(-50%,-50%);
+  transform-origin:center center;
+  pointer-events:none;
+  z-index:4;
+  animation:spawnIn .5s ease backwards;
+}
+.slug .ssvg{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.slug.leaving{transition:transform .8s ease-in, opacity .8s;opacity:0;transform:translate(-50%,-50%) scale(.4)}
+
+/* Speech bubble */
+.speech-bubble{
+  position:absolute;
+  bottom:calc(100% + 4px);left:50%;
+  transform:translateX(-50%);
+  background:#fff8e7;color:#1a1010;
+  padding:6px 9px;border-radius:10px;
+  font-size:10.5px;font-weight:800;
+  max-width:160px;text-align:center;line-height:1.25;
+  box-shadow:0 4px 14px rgba(0,0,0,.5), 0 0 0 2px #ffdb70;
+  pointer-events:none;z-index:5;opacity:0;
+  letter-spacing:.2px;
+}
+.speech-bubble.show{animation:bubbleIn .35s cubic-bezier(.2,1.6,.5,1) forwards}
+.speech-bubble::after{
+  content:'';position:absolute;top:100%;left:50%;
+  transform:translateX(-50%);
+  border:7px solid transparent;border-top-color:#fff8e7;border-bottom:0;
+}
+@keyframes bubbleIn{
+  from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.7)}
+  to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+}
+
+/* ================= SPIT ================= */
+.spit-glob{
+  position:absolute;
+  width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #ffe58a, #e0a020 60%, #a05a10);
+  box-shadow:0 0 16px rgba(255,200,60,.8), 0 0 8px rgba(255,120,0,.6);
+  pointer-events:none;
+  z-index:8;
+  transform:translate(-50%,-50%);
+  transition:left .55s cubic-bezier(.4,0,.6,1), top .55s cubic-bezier(.4,0,.6,1);
+}
+.spit-splat{
+  position:absolute;
+  width:50px;height:50px;border-radius:50%;
+  background:radial-gradient(circle, rgba(255,220,110,.75) 0%, rgba(180,120,30,.35) 45%, transparent 70%);
+  pointer-events:none;
+  z-index:7;
+  transform:translate(-50%,-50%) scale(0);
+  animation:splatAnim .8s ease-out forwards;
+}
+@keyframes splatAnim{
+  0%{transform:translate(-50%,-50%) scale(0);opacity:1}
+  40%{transform:translate(-50%,-50%) scale(1.4);opacity:.9}
+  100%{transform:translate(-50%,-50%) scale(1.8);opacity:0}
+}
+
+/* ================= CAST BAR ================= */
+.cast{
+  position:fixed;left:50%;
+  bottom:calc(82px + env(safe-area-inset-bottom));
+  width:min(300px,84vw);
+  transform:translateX(-50%) translateY(14px);opacity:0;pointer-events:none;
+  transition:.18s;z-index:500;
+}
+.cast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.cast-label{
+  font-size:12px;text-align:center;margin-bottom:5px;color:#d6f0d9;
+  text-shadow:0 2px 8px #000;font-weight:700;letter-spacing:.3px;
+}
+.cast-bar{
+  height:20px;border-radius:5px;background:rgba(4,8,5,.9);
+  border:2px solid #33512f;position:relative;overflow:hidden;
+  box-shadow:0 0 24px rgba(0,0,0,.8), inset 0 0 12px rgba(0,0,0,.9);
+}
+#castFill{
+  display:block;height:100%;width:0;border-radius:2px;
+  background:linear-gradient(180deg,#9dffb8 0%,#38c46a 45%,#1c7a3f 100%);
+  box-shadow:0 0 16px rgba(80,255,140,.6), inset 0 0 10px rgba(255,255,255,.25);
+  transition:width .06s linear;position:relative;
+}
+#castFill::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg,transparent 0 12px,rgba(255,255,255,.22) 12px 20px);
+  animation:stripes .6s linear infinite;
+}
+@keyframes stripes{to{background-position:34px 0}}
+
+/* ================= DOCK ================= */
+.dock{
+  display:flex;gap:4px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  justify-content:center;align-items:stretch;
+  background:linear-gradient(0deg,#0e1a12,#0a130d);
+  border-top:2px solid #1e3524;z-index:20;
+  box-shadow:0 -4px 20px rgba(0,0,0,.6);
+  flex-shrink:0;
+}
+.dock-btn-wrap{position:relative;display:inline-flex;flex:1;max-width:80px}
+.dock-btn{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  padding:6px 4px;width:100%;min-height:56px;
+  border-radius:11px;background:linear-gradient(180deg,#1d3324,#12211a);
+  border:2px solid #2c4a34;cursor:pointer;color:#cfe8cf;
+  font-family:inherit;letter-spacing:.2px;transition:.15s;
+  touch-action:manipulation;
+}
+.dock-btn:active:not(:disabled){transform:scale(.96);filter:brightness(1.1)}
+.dock-btn:disabled{opacity:.35;cursor:not-allowed}
+.dock-btn .icn{
+  font-size:20px;line-height:1;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.55));
+}
+.dock-btn .lbl{
+  font-size:9px;font-weight:800;letter-spacing:.2px;
+  text-transform:uppercase;
+}
+.dock-btn .sub{font-size:8.5px;font-weight:700;opacity:.75}
+.dock-btn .badge{
+  position:absolute;top:-5px;right:-3px;
+  background:linear-gradient(180deg,#ff5a5a,#c01a1a);
+  color:#fff;border-radius:10px;padding:1px 5px;
+  font-size:9px;font-weight:800;
+  box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 8px rgba(255,60,60,.5);
+  border:1.5px solid #2a0a0a;
+  min-width:16px;text-align:center;
+}
+.dock-btn.gold{
+  border-color:#6b5320;color:#ffd75e;
+  background:linear-gradient(180deg,#332a12,#1d180a);
+}
+.dock-btn.danger{
+  border-color:#6b2a2a;color:#ffb3b3;
+  background:linear-gradient(180deg,#33161a,#1d0e11);
+}
+.dock-btn.purple{
+  border-color:#4a2e6e;color:#dcc5ff;
+  background:linear-gradient(180deg,#2a1d3a,#1a1224);
+}
+.dock-sep{
+  width:1px;background:linear-gradient(180deg,transparent,#2c4a34 30%,#2c4a34 70%,transparent);
+  align-self:stretch;margin:2px 0;flex-shrink:0;
+}
+
+/* ================= MODALS ================= */
+.modal-back{
+  position:fixed;inset:0;background:rgba(2,5,3,.78);backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;opacity:0;pointer-events:none;transition:.2s;
+  padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+}
+.modal-back.show{opacity:1;pointer-events:auto}
+.modal{
+  width:100%;max-width:420px;max-height:calc(100dvh - 40px);
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#16241a,#0b130d);
+  border:2px solid #2f4a35;border-radius:16px;padding:14px;
+  box-shadow:0 24px 70px #000, 0 0 60px rgba(70,255,130,.08);
+  transform:scale(.9) translateY(14px);transition:.28s cubic-bezier(.2,1.5,.5,1);
+}
+.modal-back.show .modal{transform:scale(1) translateY(0)}
+.modal h2{
+  margin:0 0 10px;font-size:15px;letter-spacing:2.5px;text-align:center;
+  color:#9fe8b3;text-shadow:0 0 16px rgba(90,255,140,.4);font-weight:800;
+}
+
+/* PROFILE */
+.modal.prof{
+  background:
+    radial-gradient(ellipse at top, rgba(180,92,255,.12), transparent 60%),
+    linear-gradient(180deg,#1c1424,#0e0812);
+  border-color:#4a2e6e;
+  box-shadow:0 24px 70px #000, 0 0 60px rgba(180,92,255,.15);
+}
+.modal.prof h2{color:#dcc5ff;text-shadow:0 0 16px rgba(180,92,255,.5)}
+.prof-avatar{
+  width:70px;height:70px;margin:2px auto 8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px;line-height:1;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.15), transparent 70%),
+             linear-gradient(180deg,#2a1d3a,#140b1e);
+  border:3px solid #8a5cc0;
+  box-shadow:0 0 30px rgba(180,92,255,.5), inset 0 0 20px rgba(180,92,255,.3);
+  flex-shrink:0;
+}
+.prof-title{
+  text-align:center;font-size:17px;font-weight:900;letter-spacing:1px;
+  color:#ffd75e;text-shadow:0 0 20px rgba(255,190,60,.5);
+  margin-bottom:3px;
+}
+.prof-desc{
+  text-align:center;font-size:11px;color:#b8a8c8;
+  margin-bottom:12px;font-style:italic;
+}
+.prof-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  margin-bottom:12px;
+}
+.prof-stat{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(180,92,255,.15);
+  border-radius:9px;padding:7px 9px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.prof-stat .lbl{
+  font-size:9.5px;color:#8fae94;letter-spacing:.3px;
+  text-transform:uppercase;font-weight:700;
+}
+.prof-stat .val{
+  font-size:14px;font-weight:900;color:#e8d0ff;
+  text-shadow:0 0 10px rgba(180,92,255,.4);
+}
+.prof-stat .val.gold{color:#ffd75e;text-shadow:0 0 10px rgba(255,190,60,.4)}
+.prof-stat .val.green{color:#7bf0a4;text-shadow:0 0 10px rgba(90,255,140,.4)}
+
+.titles-h{
+  margin:6px 0 8px;font-size:11px;letter-spacing:2px;
+  color:#9fe8b3;font-weight:800;text-align:center;
+  text-transform:uppercase;
+}
+.titles-grid{
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+  gap:6px;overflow-y:auto;padding-right:4px;
+  max-height:190px;-webkit-overflow-scrolling:touch;
+}
+.titles-grid::-webkit-scrollbar{width:5px}
+.titles-grid::-webkit-scrollbar-thumb{background:#4a2e6e;border-radius:3px}
+.title-chip{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 4px;border-radius:9px;
+  background:rgba(255,255,255,.03);
+  border:1.5px solid rgba(180,92,255,.15);
+  text-align:center;
+  transition:.15s;
+}
+.title-chip.locked{opacity:.35;filter:grayscale(80%)}
+.title-chip.unlocked{
+  background:linear-gradient(180deg,rgba(180,92,255,.12),rgba(180,92,255,.04));
+  border-color:rgba(180,92,255,.5);
+  box-shadow:0 0 14px rgba(180,92,255,.2);
+}
+.title-chip.current{
+  border-color:#ffd75e;
+  background:linear-gradient(180deg,rgba(255,190,60,.15),rgba(255,190,60,.05));
+  box-shadow:0 0 18px rgba(255,190,60,.4);
+}
+.title-chip .t-icn{font-size:19px;line-height:1}
+.title-chip .t-name{
+  font-size:10px;font-weight:800;letter-spacing:.2px;
+  color:#dcc5ff;line-height:1.15;
+}
+.title-chip.current .t-name{color:#ffd75e}
+.title-chip .t-req{
+  font-size:9px;color:#8fae94;font-weight:600;
+}
+
+#closeProfBtn{
+  margin-top:10px;padding:12px;border-radius:10px;
+  border:1.5px solid #4a2e6e;
+  background:linear-gradient(180deg,#241a30,#170f20);
+  color:#c8b8d8;font-size:12px;font-weight:800;letter-spacing:1.5px;
+  cursor:pointer;font-family:inherit;transition:.15s;
+  text-transform:uppercase;
+  flex-shrink:0;
+  touch-action:manipulation;
+}
+#closeProfBtn:active{border-color:#8a5cc0;color:#e0d0f0;transform:scale(.98)}
+
+/* BOTTOM SHEET */
+.sheet-back{
+  position:fixed;inset:0;background:rgba(2,5,3,.78);backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  z-index:9999;opacity:0;pointer-events:none;transition:.25s;
+}
+.sheet-back.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;
+  max-height:88vh;max-height:88dvh;
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#1c1424,#0e0812);
+  border-top:2px solid #4a2e6e;
+  border-radius:18px 18px 0 0;
+  padding:8px 12px calc(12px + env(safe-area-inset-bottom));
+  transform:translateY(100%);
+  transition:.35s cubic-bezier(.2,1.1,.5,1);
+  box-shadow:0 -20px 60px rgba(0,0,0,.7), 0 0 80px rgba(180,92,255,.15);
+}
+.sheet-back.show .sheet{transform:translateY(0)}
+.sheet-handle{
+  width:40px;height:4px;border-radius:2px;
+  background:#4a2e6e;margin:0 auto 8px;
+  box-shadow:0 0 8px rgba(180,92,255,.4);
+  flex-shrink:0;
+}
+.sheet-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;flex-shrink:0;
+}
+.sheet-header h2{
+  margin:0;font-size:14px;letter-spacing:2px;
+  color:#dcc5ff;text-shadow:0 0 16px rgba(180,92,255,.5);
+  font-weight:800;
+}
+.sheet-close{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(180,92,255,.3);
+  color:#dcc5ff;font-size:14px;font-weight:800;
+  cursor:pointer;transition:.15s;
+  display:flex;align-items:center;justify-content:center;
+  font-family:inherit;
+  touch-action:manipulation;
+  flex-shrink:0;
+}
+.sheet-close:active{background:rgba(255,60,60,.15);border-color:#c94a4a;color:#ffb3b3;transform:scale(.92)}
+
+/* LOOT LIST */
+.loot{
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:6px;
+  padding-right:2px;min-height:40px;flex:1;
+}
+.loot::-webkit-scrollbar{width:5px}
+.loot::-webkit-scrollbar-thumb{background:#2c4a34;border-radius:3px}
+.loot-item{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;
+  background:rgba(255,255,255,.035);border-left:4px solid #666;
+  animation:lootIn .4s cubic-bezier(.2,1.6,.5,1) backwards;
+  flex-shrink:0;
+}
+@keyframes lootIn{from{opacity:0;transform:translateX(-22px) scale(.9)}}
+.li-icon{
+  font-size:22px;line-height:1;
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  background:rgba(0,0,0,.3);
+  filter:drop-shadow(0 0 8px currentColor);
+  flex-shrink:0;
+}
+.li-info{flex:1;min-width:0}
+.li-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-rar{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;opacity:.85;font-weight:600}
+.li-val{font-size:12.5px;font-weight:800;color:#ffd75e;white-space:nowrap}
+.loot-item.r-common{border-color:#9aa4b2}   .loot-item.r-common .li-name{color:#c3ccd8}
+.loot-item.r-uncommon{border-color:#4ade80;background:rgba(74,222,128,.07)} .loot-item.r-uncommon .li-name{color:#7bf0a4}
+.loot-item.r-rare{border-color:#4a9eff;background:rgba(74,158,255,.09);box-shadow:0 0 18px rgba(74,158,255,.18)} .loot-item.r-rare .li-name{color:#7cc0ff}
+.loot-item.r-epic{border-color:#b45cff;background:rgba(180,92,255,.11);box-shadow:0 0 22px rgba(180,92,255,.28)} .loot-item.r-epic .li-name{color:#cf9cff}
+.loot-item.r-legendary{border-color:#ffb020;background:rgba(255,176,32,.12);box-shadow:0 0 26px rgba(255,176,32,.4)} .loot-item.r-legendary .li-name{color:#ffd06a}
+.loot-item.r-mythic{border-color:#ff3b3b;background:rgba(255,59,59,.14);box-shadow:0 0 30px rgba(255,59,59,.5)} .loot-item.r-mythic .li-name{color:#ff8080}
+.loot-item.r-mythic,.loot-item.r-legendary{animation:lootIn .4s cubic-bezier(.2,1.6,.5,1) backwards, pulseGlow 1.4s ease-in-out infinite alternate}
+@keyframes pulseGlow{to{filter:brightness(1.22)}}
+
+.inv-item{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;
+  background:rgba(255,255,255,.04);border-left:3px solid #666;
+  transition:.15s;
+  flex-shrink:0;
+}
+.inv-item .li-icon{font-size:19px;width:30px;height:30px}
+.inv-item .li-info{flex:1;min-width:0}
+.inv-item .li-name{font-size:12px}
+.inv-item .li-rar{font-size:9px}
+.inv-count{
+  font-size:11.5px;font-weight:800;color:#ffd75e;white-space:nowrap;
+  background:rgba(255,200,60,.1);padding:2px 6px;border-radius:5px;
+}
+.sell-btn{
+  padding:5px 8px;border-radius:6px;cursor:pointer;font-size:10.5px;font-weight:800;
+  background:linear-gradient(180deg,#3a5a24,#1f3a12);color:#c8ffa0;
+  border:1.5px solid #4a7a30;font-family:inherit;transition:.15s;white-space:nowrap;
+  touch-action:manipulation;
+}
+.sell-btn:active{transform:scale(.94);filter:brightness(1.2)}
+
+.inv-stats{
+  text-align:center;font-size:11px;color:#b8a8c8;margin-bottom:8px;letter-spacing:.3px;
+  flex-shrink:0;
+}
+.inv-stats b{color:#ffd75e;font-size:12px}
+
+.modal-total{
+  text-align:center;margin-top:10px;font-size:13px;font-weight:800;color:#ffd75e;
+  min-height:18px;text-shadow:0 0 12px rgba(255,200,60,.4);
+  flex-shrink:0;
+}
+#takeBtn, #sellAllBtn{
+  margin-top:10px;padding:12px;border-radius:10px;border:2px solid #4f8a5e;
+  background:linear-gradient(180deg,#2a8f4d,#186331);color:#eaffe9;
+  font-size:14px;font-weight:800;letter-spacing:1.8px;cursor:pointer;
+  font-family:inherit;transition:.15s;
+  touch-action:manipulation;
+  flex-shrink:0;
+}
+#takeBtn:active, #sellAllBtn:active{transform:scale(.98);filter:brightness(1.15)}
+#takeBtn:disabled, #sellAllBtn:disabled{opacity:.4;cursor:wait}
+#sellAllBtn{
+  background:linear-gradient(180deg,#8a5a2a,#5a3a18);
+  border-color:#d4a437;color:#ffe6b0;
+  margin-top:6px;font-size:13px;padding:10px;
+}
+.empty-msg{text-align:center;padding:20px 6px;color:#7a8f7e;font-size:13px;line-height:1.5}
+
+/* TOASTS */
+.toasts{
+  position:fixed;left:8px;right:8px;
+  bottom:calc(78px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:5px;
+  z-index:10000;pointer-events:none;
+  max-width:min(320px,72vw);
+}
+.toast{
+  padding:7px 11px;border-radius:8px;font-size:11.5px;font-weight:600;
+  background:rgba(10,22,14,.94);border-left:3px solid #4f8a5e;color:#c8e6cc;
+  box-shadow:0 6px 20px rgba(0,0,0,.6);animation:toastIn .3s ease backwards;
+  line-height:1.3;
+}
+.toast.out{animation:toastOut .4s ease forwards}
+.toast.steal{background:rgba(40,6,10,.95);border-left-color:#ff3b3b;color:#ffc5c5}
+.toast.critic{background:rgba(40,32,6,.95);border-left-color:#ffd75e;color:#ffeeb0;font-style:italic}
+.toast.slug{background:rgba(28,10,38,.95);border-left-color:#b06ad0;color:#e0c8f0}
+@keyframes toastIn{from{opacity:0;transform:translateX(-26px)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-26px)}}
+
+.flash{position:fixed;inset:0;pointer-events:none;z-index:10001;animation:flashAnim .8s ease-out forwards}
+@keyframes flashAnim{0%{opacity:1}100%{opacity:0}}
+.shake{animation:screenShake .5s ease}
+@keyframes screenShake{
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-6px,4px)}
+  40%{transform:translate(5px,-5px)}
+  60%{transform:translate(-4px,-3px)}
+  80%{transform:translate(3px,3px)}
+}
+
+/* =====================================================
+   ПОРТРЕТНАЯ ОРИЕНТАЦИЯ 9:16 — основной целевой режим
+   ===================================================== */
+@media (orientation: portrait){
+  .hud{padding:5px 7px;min-height:42px;gap:4px}
+  .hud-left{gap:5px}
+  .coin{font-size:13px;padding:2px 7px}
+  .lvl-badge{font-size:10px;padding:2px 7px;max-width:100px}
+  .lvl-badge .icn{font-size:12px}
+  .pity{font-size:9px}
+  .pity-bar{width:60px}
+
+  .stat{display:none}
+  .stat.show-mobile{display:none}
+
+  .dock{padding:5px 5px calc(5px + env(safe-area-inset-bottom));gap:3px}
+  .dock-btn{min-height:52px;padding:5px 3px;border-radius:10px}
+  .dock-btn .icn{font-size:18px}
+  .dock-btn .lbl{font-size:8.5px}
+  .dock-btn .sub{font-size:8px}
+  .dock-btn-wrap{max-width:72px}
+
+  .cast{bottom:calc(74px + env(safe-area-inset-bottom));width:min(280px,86vw)}
+  .cast-label{font-size:11px}
+
+  .mush{width:66px;height:74px}
+  .slug{width:64px;height:38px}
+  .speech-bubble{font-size:10px;padding:5px 8px;max-width:140px}
+
+  .toasts{max-width:min(280px,76vw)}
+  .toast{font-size:11px;padding:6px 10px}
+
+  .modal{padding:12px;border-radius:14px}
+  .modal h2{font-size:14px;margin-bottom:8px}
+  .prof-avatar{width:62px;height:62px;font-size:34px}
+  .prof-title{font-size:15px}
+  .titles-grid{grid-template-columns:repeat(auto-fill, minmax(88px, 1fr));max-height:170px}
+  .title-chip .t-icn{font-size:17px}
+  .title-chip .t-name{font-size:9.5px}
+}
+
+/* Очень узкие экраны (9:16 с малым width, например 360×640) */
+@media (orientation: portrait) and (max-width:400px){
+  .hud-left .stat, .hud-left .lvl-badge span:not(.icn){font-size:10px}
+  .lvl-badge span:not(.icn){max-width:70px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle;white-space:nowrap}
+  .dock-btn .lbl{font-size:8px}
+  .dock-btn-wrap{max-width:66px}
+  .dock-btn{min-height:48px;padding:4px 2px}
+  .dock-btn .icn{font-size:17px}
+  .dock-btn .sub{font-size:7.5px}
+}
+
+/* Широкие телефоны — типовая 9:16 (например 414×736) */
+@media (orientation: portrait) and (min-width:401px){
+  .mush{width:72px;height:80px}
+  .dock-btn .icn{font-size:20px}
+  .dock-btn .lbl{font-size:9px}
+  .dock-btn-wrap{max-width:78px}
+}
+
+/* Ландшафт для мобильных — оставляем компактно */
+@media (orientation: landscape) and (max-height:500px){
+  .hud{padding:4px 10px;min-height:36px}
+  .coin{font-size:12px}
+  .dock{padding:4px 8px calc(4px + env(safe-area-inset-bottom))}
+  .dock-btn{min-height:44px;padding:4px 8px}
+  .dock-btn .icn{font-size:16px}
+  .dock-btn .lbl{font-size:8px}
+  .dock-btn .sub{font-size:7.5px}
+  .dock-btn-wrap{max-width:60px}
+  .cast{bottom:calc(58px + env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hud">
+    <div class="hud-left">
+      <div class="coin" id="coinBox">$ <span id="coins">0</span></div>
+      <div class="lvl-badge" id="lvlBadge">
+        <span class="icn" id="lvlIcon">🌱</span>
+        <span id="lvl">Новичок</span>
+      </div>
+    </div>
+    <div class="pity">
+      ГАРАНТ
+      <div class="pity-bar"><i id="pityFill"></i></div>
+      <b id="pityNum" style="color:#cfe8cf">0/25</b>
+    </div>
+  </div>
+
+  <div class="field" id="field">
+    <div class="trees" id="trees"></div>
+  </div>
+
+  <div class="dock">
+    <div class="dock-btn-wrap">
+      <button class="dock-btn" id="shopBox">
+        <span class="icn">🎁</span>
+        <span class="lbl">Ящик</span>
+        <span class="sub">50 $</span>
+      </button>
+    </div>
+    <div class="dock-btn-wrap">
+      <button class="dock-btn gold" id="shopRitual">
+        <span class="icn">⭐</span>
+        <span class="lbl">Ритуал</span>
+        <span class="sub">120 $</span>
+      </button>
+    </div>
+    <div class="dock-btn-wrap">
+      <button class="dock-btn danger" id="shopRisk">
+        <span class="icn">☠️</span>
+        <span class="lbl">Риск</span>
+        <span class="sub">300 $</span>
+      </button>
+    </div>
+    <div class="dock-sep"></div>
+    <div class="dock-btn-wrap">
+      <button class="dock-btn purple" id="invBtn">
+        <span class="icn">🎒</span>
+        <span class="lbl">Рюкзак</span>
+        <span class="badge" id="invBadge" style="display:none">0</span>
+      </button>
+    </div>
+    <div class="dock-btn-wrap">
+      <button class="dock-btn purple" id="profBtn">
+        <span class="icn">👤</span>
+        <span class="lbl">Профиль</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="cast" id="cast">
+  <div class="cast-label" id="castLabel">Сбор гриба…</div>
+  <div class="cast-bar"><i id="castFill"></i></div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <h2 id="modalTitle">ДОБЫЧА</h2>
+    <div class="loot" id="lootList"></div>
+    <div class="modal-total" id="modalTotal"></div>
+    <button id="takeBtn">ЗАБРАТЬ В РЮКЗАК</button>
+  </div>
+</div>
+
+<div class="sheet-back" id="invBack">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h2>🎒 РЮКЗАК</h2>
+      <button class="sheet-close" id="closeInvBtn">✕</button>
+    </div>
+    <div class="inv-stats" id="invStats">Пусто</div>
+    <div class="loot" id="invList"></div>
+    <button id="sellAllBtn">💰 ПРОДАТЬ ВСЁ</button>
+  </div>
+</div>
+
+<div class="modal-back" id="profBack">
+  <div class="modal prof">
+    <h2>👤 ПРОФИЛЬ</h2>
+    <div class="prof-avatar" id="profAvatar">🌱</div>
+    <div class="prof-title" id="profTitle">Новичок</div>
+    <div class="prof-desc" id="profDesc">Начало пути</div>
+    <div class="prof-stats" id="profStats"></div>
+    <h3 class="titles-h">🏆 ЗВАНИЯ</h3>
+    <div class="titles-grid" id="titlesGrid"></div>
+    <button id="closeProfBtn">ЗАКРЫТЬ</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   РЕДКОСТИ
+   ========================================================= */
+const RARITY = {
+  common:    { name:'Обычный',     color:'#9aa4b2' },
+  uncommon:  { name:'Необычный',   color:'#4ade80' },
+  rare:      { name:'Редкий',      color:'#4a9eff' },
+  epic:      { name:'Эпический',   color:'#b45cff' },
+  legendary: { name:'Легендарный', color:'#ffb020' },
+  mythic:    { name:'МИФИЧЕСКИЙ',  color:'#ff3b3b' },
+};
+const RARITY_ORDER = ['common','uncommon','rare','epic','legendary','mythic'];
+
+const ITEMS = {
+common: [
+['Бабкин носок','🧦',[3,8]],['Дырявая пробка','🍾',[3,7]],['Долбанная кукла','🎎',[5,10]],
+['Старая книга','📖',[4,9]],['Ржавый гвоздь','📌',[2,5]],['Мокрая тряпка','🧽',[3,7]],
+['Пыльный тапок','👟',[4,9]],['Сломанная ложка','🥄',[3,6]],['Пустая банка','🫙',[2,5]],
+['Огрызок яблока','🍎',[3,6]],['Засохшая корка','🍞',[2,4]],['Кусок верёвки','🪢',[3,7]],
+['Рваная газета','📰',[2,5]],['Пустая бутылка','🍾',[3,7]],['Сломанная ручка','🖊️',[3,6]],
+['Огарок свечи','🕯️',[4,8]],['Комок шерсти','🧶',[3,7]],['Погнутая вилка','🍴',[3,6]],
+['Треснувший стакан','🥃',[4,8]],['Старая пуговица','🔘',[2,5]],['Тусклая монета','🪙',[3,8]],
+['Кусок мыла','🧼',[2,5]],['Обломок карандаша','✏️',[3,6]],['Мятая крышка','🥫',[3,7]],
+['Засохший лист','🍂',[2,5]],['Грязный платок','🤧',[3,7]],['Старая расчёска','💇',[3,7]],
+['Грабельный зуб','🦷',[4,9]],['Куриная косточка','🦴',[5,9]],['Чёрствый хлеб','🍞',[3,7]],
+['Ржавая гайка','🔩',[3,7]],['Кусок кирпича','🧱',[4,9]],['Порванный шнурок','👟',[2,5]],
+['Смятая бумажка','📄',[2,5]],['Надкусанная морковь','🥕',[3,7]],['Огрызок огурца','🥒',[3,6]],
+['Старая марка','📮',[5,11]],['Пустой коробок','📦',[3,7]],['Сломанный зонтик','☂️',[5,11]],
+['Засохший жук','🪲',[5,11]],['Мёртвая муха','🪰',[2,6]],['Клок паутины','🕸️',[3,8]],
+['Куриная лапка','🐔',[3,7]],['Подошва ботинка','👞',[5,9]],['Ржавый ключ','🔑',[5,11]],
+['Осколок стекла','🔷',[3,7]],['Треснувший горшок','🏺',[5,10]],['Комок плесени','🦠',[4,9]],
+['Пучок травы','🌾',[2,6]],['Катышек пыли','🫧',[2,4]],['Пустая гильза','🔩',[4,8]],
+['Скошенный ноготь','💅',[2,6]],['Комок земли','🟤',[2,6]],['Капля смолы','🟫',[4,9]],
+['Засохший червяк','🪱',[3,7]],['Старая записка','📝',[5,11]],['Ржавая скрепка','📎',[2,5]],
+['Пыльный окурок','🚬',[2,6]],['Огрызок сыра','🧀',[5,11]],['Кусок мела','🖍️',[3,7]],
+['Старый тапок-мышь','🐭',[4,9]],
+],
+uncommon: [
+['Стеклянный шарик','🔮',[15,28]],['Кожаный ремень','🩹',[14,26]],['Старое перо','🪶',[13,24]],
+['Глиняная свистулька','🎶',[16,30]],['Медная монета','🟠',[18,32]],['Ржавая подкова','🧲',[15,28]],
+['Деревянная ложка','🥄',[13,25]],['Кусок воска','🕯️',[19,34]],['Птичье гнездо','🪺',[18,32]],
+['Сушёный гриб','🍄',[15,28]],['Пчелиные соты','🍯',[17,30]],['Сушёные ягоды','🫐',[14,26]],
+['Костик кролика','🦴',[13,24]],['Куриное яйцо','🥚',[17,30]],['Кленовый лист','🍁',[13,25]],
+['Пёрышко совы','🦉',[19,33]],['Ржавый колокольчик','🔔',[16,29]],['Осколок зеркала','🪞',[18,32]],
+['Засохшая роза','🌹',[15,27]],['Кристалл соли','🧂',[13,24]],['Кубик сахара','🍬',[14,26]],
+['Медный гвоздь','🔩',[16,29]],['Кожаный кошель','👛',[20,35]],['Глиняная кружка','☕',[18,32]],
+['Пучок лаванды','💐',[16,29]],['Моток пряжи','🧶',[14,26]],['Вязаный носок','🧦',[13,24]],
+['Старое фото','📷',[19,34]],['Открытка с котиком','🐱',[15,28]],['Сувенирная монета','🪙',[18,32]],
+['Деревянный гребень','🪮',[16,29]],['Кусок янтаря','🟡',[24,42]],['Морская ракушка','🐚',[14,26]],
+['Морской камешек','🪨',[13,24]],['Соломенная шляпа','👒',[16,29]],['Глиняный свисток','🎵',[15,27]],
+['Кусок мёда','🍯',[22,38]],['Бутылочка с пробкой','🍾',[18,32]],['Старая карта','🗺️',[24,42]],
+['Половинка компаса','🧭',[19,34]],['Кусок зеркала','🪞',[16,29]],['Треснувшая лампа','💡',[18,32]],
+['Ржавый замок','🔒',[16,29]],['Кожаный мешочек','👝',[20,34]],['Лист клевера','🍀',[24,44]],
+['Перо ворона','🪶',[15,27]],['Лапка зайца','🐾',[17,30]],['Серебряная бусина','⚪',[22,38]],
+['Заячья губа','🐰',[15,28]],
+],
+rare: [
+['Белый гриб','🍄',[55,95]],['Чёрный трюфель','🟤',[65,110]],['Серебряная шляпка','🥈',[70,120]],
+['Кристальная спора','💠',[78,130]],['Кольцо ведьмы','💍',[60,105]],['Слёзы дриады','💧',[68,115]],
+['Лунный орех','🌙',[72,125]],['Зуб дракона','🦷',[75,128]],['Серебряная монета','🥈',[62,108]],
+['Золотая монета','🥇',[85,145]],['Старинное кольцо','💍',[92,155]],['Магический амулет','🧿',[100,165]],
+['Кристалл кварца','💎',[88,150]],['Мини-корона','👑',[105,172]],['Древний свиток','📜',[78,135]],
+['Перо феникса','🪶',[108,178]],['Кусок метеорита','☄️',[115,185]],['Лунный камень','🌙',[100,165]],
+['Кристалл льда','❄️',[92,152]],['Зачарованная книга','📖',[85,142]],['Серебряная ложка','🥄',[65,110]],
+['Глиняный идол','🗿',[74,124]],['Кристалл маны','💠',[95,158]],['Древний медальон','📿',[88,148]],
+['Кулон с рубином','❤️',[108,180]],['Драгоценное дерево','🪵',[70,120]],['Волшебная палочка','🪄',[102,170]],
+['Старая флейта','🎺',[78,132]],['Клык волка','🐺',[68,115]],['Чешуйка дракона','🐲',[112,188]],
+['Плащ эльфа','🧝',[98,162]],['Корона из листьев','🍃',[85,144]],['Кристалл времени','⏳',[125,205]],
+['Ключ от древних дверей','🗝️',[105,175]],['Перо грифона','🦅',[108,180]],['Звёздный металл','⭐',[132,218]],
+['Золотой самородок','🟡',[140,230]],['Зеркальце гадалки','🔮',[88,148]],['Карта сокровищ','🗺️',[115,188]],
+['Хрустальный череп','💀',[136,224]],['Печать короля','🔯',[125,205]],['Изумрудное кольцо','💚',[142,235]],
+['Аметист','💜',[80,140]],['Сапфир','🔵',[95,160]],['Изумруд','🟢',[110,180]],
+['Рубин','🔴',[120,195]],['Топаз','🟡',[85,145]],['Оникс','⚫',[90,155]],
+['Аквамарин','🩵',[88,148]],
+],
+epic: [
+['Гриб-призрак','👻',[230,400]],['Золотой боровик','🥇',[255,440]],['Кристальный гриб','🔮',[215,380]],
+['Сердце мицелия','💜',[270,460]],['Шляпа-невидимка','🎩',[245,420]],['Печать лешего','🔯',[280,480]],
+['Корень мандрагоры','🌱',[260,450]],['Глаз василиска','👁️',[295,500]],['Перо ангела','👼',[310,530]],
+['Слеза единорога','🦄',[285,490]],['Кровь дракона','🩸',[300,520]],['Кристалл души','💎',[325,560]],
+['Меч древнего воина','⚔️',[270,460]],['Щит паладина','🛡️',[285,490]],['Лук эльфа','🏹',[260,450]],
+['Мантия мага','🧙',[295,500]],['Кольцо власти','💍',[320,545]],['Пыль феи','✨',[255,435]],
+['Волшебное зеркало','🪞',[300,515]],['Кость титана','🦴',[310,530]],['Зуб вампира','🧛',[280,480]],
+['Плащ невидимости','🧥',[285,490]],['Свиток воскрешения','📜',[340,580]],['Кубок вечности','🏆',[360,610]],
+['Ключ от рая','🗝️',[325,555]],['Амулет бессмертия','🧿',[375,635]],['Свеча мёртвых','🕯️',[260,450]],
+['Клык цербера','🐕',[300,515]],['Кристалл хаоса','🌀',[390,660]],['Око провидца','👁️',[335,570]],
+['Камень бессмертия','🧿',[420,720]],['Драконий камень','🐉',[450,780]],['Камень забвения','🌑',[410,700]],
+],
+legendary: [
+['Гриб-король','👑',[950,1650]],['Древний мицелий','🌳',[880,1550]],['Шляпа Лешего','🧙',[1050,1850]],
+['Лунный гриб','🌙',[980,1720]],['Слеза звезды','⭐',[1080,1900]],['Грибной трон','🪑',[1020,1800]],
+['Сердце леса','💚',[1150,2050]],['Корона друидов','👑',[1050,1870]],['Посох Мерлина','🪄',[1110,1970]],
+['Философский камень','💎',[1200,2150]],['Перо феникса','🪶',[1000,1780]],['Кровь богов','🩸',[1170,2080]],
+['Скипетр царя','🏛️',[1080,1920]],['Ковчег завета','📦',[1280,2280]],['Грааль','🏆',[1350,2400]],
+],
+mythic: [
+['ГРИБ ВСЕЛЕННОЙ','🌌',[4500,7500]],['АБСОЛЮТНЫЙ БОРОВИК','💫',[5200,8800]],['ПЕРВОГРИБ','🕳️',[6000,11000]],
+['ЯДРО ЛЕСА','🧿',[4800,9800]],['КВАНТОВЫЙ ГРИБ','⚛️',[7000,13000]],
+],
+};
+
+const BASE_WEIGHTS = {
+  common:    56, uncommon:  26, rare:      13,
+  epic:      4.4, legendary: 0.5, mythic:    0.06,
+};
+
+const TITLES = [
+  { id:'novice',   name:'Новичок',             icon:'🌱', req:s=>true,                              desc:'Начало пути' },
+  { id:'picker',   name:'Грибник',             icon:'🍄', req:s=>s.picks>=10,                       desc:'10 сборов' },
+  { id:'hunter',   name:'Охотник',             icon:'🏹', req:s=>s.picks>=25,                       desc:'25 сборов' },
+  { id:'maniac',   name:'Грибной маньяк',      icon:'🌀', req:s=>s.picks>=50,                       desc:'50 сборов' },
+  { id:'ludoman',  name:'ЛУДОМАН',             icon:'💀', req:s=>s.picks>=100,                      desc:'100 сборов' },
+  { id:'pro',      name:'Профессионал',        icon:'🎯', req:s=>s.picks>=200,                      desc:'200 сборов' },
+  { id:'legend',   name:'Легенда леса',        icon:'🔥', req:s=>s.picks>=350,                      desc:'350 сборов' },
+  { id:'rich',     name:'Богач',               icon:'💰', req:s=>s.maxCoins>=5000,                  desc:'Пик 5000 $' },
+  { id:'tycoon',   name:'Магнат',              icon:'💎', req:s=>s.maxCoins>=25000,                 desc:'Пик 25000 $' },
+  { id:'collector',name:'Коллекционер',        icon:'📚', req:s=>s.uniqueItems>=30,                 desc:'30 видов лута' },
+  { id:'museum',   name:'Хранитель музея',     icon:'🏛️', req:s=>s.uniqueItems>=80,                 desc:'80 видов лута' },
+  { id:'witness',  name:'Свидетель',           icon:'👀', req:s=>s.criticsReceived>=1,              desc:'Услышать критику' },
+  { id:'patient',  name:'Терпеливый',          icon:'😤', req:s=>s.criticsReceived>=20,             desc:'20 критик' },
+  { id:'stoic',    name:'Стоик',               icon:'🧘', req:s=>s.criticsReceived>=50,             desc:'50 критик' },
+  { id:'spit',     name:'Плюнутый',            icon:'💦', req:s=>s.spitsReceived>=10,               desc:'10 плевков' },
+  { id:'slugfood', name:'Убегающий',           icon:'💨', req:s=>s.mushroomsFled>=20,               desc:'20 побегов грибов' },
+  { id:'luck',     name:'Везунчик',            icon:'🍀', req:s=>s.legendaries>=1,                  desc:'Найти легендарку' },
+  { id:'mythhunter',name:'Мифический охотник', icon:'🌌', req:s=>s.mythics>=1,                      desc:'Найти мифик' },
+  { id:'god',      name:'ГРИБНОЙ БОГ',         icon:'👑', req:s=>s.picks>=500&&s.mythics>=1,        desc:'500 сборов + мифик' },
+];
+
+const TICKER = [
+  'Ещё один гриб… и точно повезёт.',
+  'Ты чувствуешь: следующий будет легендарным.',
+  'Лудомания +1.',
+  'Не останавливайся, лес щедр.',
+  'Всего пара сборов до гаранта…',
+  'Мифический где-то рядом. Точно.',
+  'Ты не уйдёшь, пока не выбьешь мифик.',
+  'Грибы сами себя не соберут.',
+  'Ещё чуть-чуть и отыграешься.',
+  'Лес наблюдает за тобой.',
+  'Слизни распугали грибы. Снова.',
+  'Глазастый гриб всё видит. И осуждает.',
+];
+
+const EYES_CRITICISM = [
+  'Серьёзно? Бабушка собирает лучше.',
+  'Опять кликаешь по грибам? Жизнь удалась?',
+  'Лес — не казино, ты в курсе?',
+  'Лудоман. Просто лудоман.',
+  'Сколько можно? Заняться нечем?',
+  'Собери себя в первую очередь.',
+  'Твой КПД — как у пня.',
+  'Позор грибникам.',
+  'Даже слизни продуктивнее.',
+  'Пфф. Любитель.',
+  'Ты ещё здесь? Шёл бы домой.',
+  'Ещё гриб? Гениально.',
+  'Лудомания заразна. Я предупредил.',
+  'Ты точно грибник? Не похоже.',
+  'Видел бы тебя лес — расстроился.',
+  'Я всё вижу. И мне стыдно за тебя.',
+  'Ну и жадность… Грибы не бесконечны.',
+  'Ещё одна полоска сбора — и я вызову санитаров.',
+  'Спина болит? А грибы собираешь.',
+  'Оставь хоть что-то слизням.',
+  'Слизень быстрее тебя соображает.',
+  'Иди лучше траву потрогай.',
+];
+
+const state = {
+  coins: 0, picks: 0, pity: 0, ritual: 0,
+  best: null, bestRarity: 'common', bestColor: '#cfe8cf',
+  modalOpen: false, mushId: 0,
+  inventory: {}, maxCoins: 0, everOwned: {},
+  legendaries: 0, mythics: 0,
+  criticsReceived: 0, spitsReceived: 0, mushroomsFled: 0,
+};
+const PITY_MAX = 25;
+
+/* =========================================================
+   DOM
+   ========================================================= */
+const field      = document.getElementById('field');
+const treesBox   = document.getElementById('trees');
+const castEl     = document.getElementById('cast');
+const castFill   = document.getElementById('castFill');
+const castLabel  = document.getElementById('castLabel');
+const modalBack  = document.getElementById('modalBack');
+const modalTitle = document.getElementById('modalTitle');
+const lootList   = document.getElementById('lootList');
+const modalTotal = document.getElementById('modalTotal');
+const takeBtn    = document.getElementById('takeBtn');
+const toastsBox  = document.getElementById('toasts');
+const coinsEl    = document.getElementById('coins');
+const picksEl    = document.getElementById('picks');
+const bestEl     = document.getElementById('best');
+const lvlEl      = document.getElementById('lvl');
+const lvlIcon    = document.getElementById('lvlIcon');
+const lvlBadge   = document.getElementById('lvlBadge');
+const pityFill   = document.getElementById('pityFill');
+const pityNum    = document.getElementById('pityNum');
+const coinBox    = document.getElementById('coinBox');
+const invBtn     = document.getElementById('invBtn');
+const invBadge   = document.getElementById('invBadge');
+const invBack    = document.getElementById('invBack');
+const invList    = document.getElementById('invList');
+const invStats   = document.getElementById('invStats');
+const sellAllBtn = document.getElementById('sellAllBtn');
+const closeInvBtn= document.getElementById('closeInvBtn');
+const profBtn    = document.getElementById('profBtn');
+const profBack   = document.getElementById('profBack');
+const profAvatar = document.getElementById('profAvatar');
+const profTitle  = document.getElementById('profTitle');
+const profDesc   = document.getElementById('profDesc');
+const profStats  = document.getElementById('profStats');
+const titlesGrid = document.getElementById('titlesGrid');
+const closeProfBtn = document.getElementById('closeProfBtn');
+
+/* =========================================================
+   ДЕКОР (адаптивный)
+   ========================================================= */
+(function decorate(){
+  const small = window.innerWidth < 500;
+  for(let i=0;i<(small?10:14);i++){
+    const t = document.createElement('div');
+    const r = Math.random();
+    t.className = 'tree' + (r<.35?' xs':r<.7?' s':'');
+    t.style.left = (Math.random()*106-3) + '%';
+    t.style.opacity = (0.55 + Math.random()*0.45).toFixed(2);
+    treesBox.appendChild(t);
+  }
+  for(let i=0;i<(small?6:9);i++){
+    const f = document.createElement('div');
+    f.className = 'fly';
+    f.style.left = (Math.random()*95+2)+'%';
+    f.style.top  = (Math.random()*70+25)+'%';
+    f.style.animationDelay = (-Math.random()*9)+'s';
+    f.style.animationDuration = (7+Math.random()*7)+'s';
+    field.appendChild(f);
+  }
+})();
+
+/* =========================================================
+   ЗВУК
+   ========================================================= */
+let actx = null;
+function beep(freq, dur=0.08, type='sine', vol=0.035){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function raritySound(r){
+  const map = { common:[220,'triangle'], uncommon:[330,'triangle'], rare:[440,'sine'],
+    epic:[660,'sine'], legendary:[880,'sine'], mythic:[1100,'sawtooth'] };
+  const [f,t] = map[r] || [300,'sine'];
+  beep(f, .12, t, .05);
+  if(r==='legendary'||r==='mythic'){
+    setTimeout(()=>beep(f*1.5,.16,'sine',.05),110);
+    setTimeout(()=>beep(f*2,.22,'sine',.05),230);
+  }
+}
+function criticSound(){ beep(300,.09,'square',.03); setTimeout(()=>beep(220,.11,'square',.03),100); }
+function slugSound(){ beep(140,.1,'sine',.03); setTimeout(()=>beep(190,.12,'sine',.03),100); }
+function spitSound(){ beep(500,.08,'sawtooth',.04); setTimeout(()=>beep(280,.14,'sawtooth',.04),60); }
+function fanfare(){ beep(660,.1,'sine',.05); setTimeout(()=>beep(880,.12,'sine',.05),90); setTimeout(()=>beep(1320,.2,'sine',.05),200); }
+
+/* =========================================================
+   УТИЛИТЫ
+   ========================================================= */
+const rnd  = (a,b)=> a + Math.random()*(b-a);
+const rndI = (a,b)=> Math.floor(rnd(a,b+1));
+const fmt  = n => n.toLocaleString('ru-RU');
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+
+function weightedPick(weights){
+  let total = 0;
+  for(const k in weights) total += weights[k];
+  let r = Math.random()*total;
+  for(const k in weights){
+    r -= weights[k];
+    if(r <= 0) return k;
+  }
+  return Object.keys(weights)[0];
+}
+function toast(text, color, cls){
+  const d = document.createElement('div');
+  d.className = 'toast' + (cls ? ' ' + cls : '');
+  d.textContent = text;
+  if(color) d.style.borderLeftColor = color;
+  toastsBox.appendChild(d);
+  while(toastsBox.children.length > 4) toastsBox.firstChild.remove();
+  setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); }, 2800);
+}
+function flash(color){
+  const d = document.createElement('div');
+  d.className = 'flash';
+  d.style.background = `radial-gradient(circle at 50% 55%, ${color}66, transparent 70%)`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 800);
+}
+function screenShake(){
+  document.body.classList.add('shake');
+  setTimeout(()=>document.body.classList.remove('shake'), 500);
+}
+
+/* =========================================================
+   ЗВАНИЯ / ПРОФИЛЬ
+   ========================================================= */
+function getCurrentTitle(){
+  let current = TITLES[0];
+  for(const t of TITLES){ if(t.req(state)) current = t; }
+  return current;
+}
+function renderProfile(){
+  const cur = getCurrentTitle();
+  profAvatar.textContent = cur.icon;
+  profTitle.textContent  = cur.name;
+  profDesc.textContent   = cur.desc;
+
+  const totalItems = invTotalCount();
+  const invValue = invTotalValue();
+  const uniqueCount = Object.keys(state.everOwned).length;
+
+  profStats.innerHTML = `
+    <div class="prof-stat"><span class="lbl">Сборов</span><span class="val">${fmt(state.picks)}</span></div>
+    <div class="prof-stat"><span class="lbl">В рюкзаке</span><span class="val">${fmt(totalItems)}</span></div>
+    <div class="prof-stat"><span class="lbl">Всего $</span><span class="val gold">${fmt(state.coins)}</span></div>
+    <div class="prof-stat"><span class="lbl">Стоимость рюкзака</span><span class="val gold">${fmt(invValue)}</span></div>
+    <div class="prof-stat"><span class="lbl">Пик капитала</span><span class="val gold">${fmt(state.maxCoins)}</span></div>
+    <div class="prof-stat"><span class="lbl">Уникальных видов</span><span class="val">${uniqueCount}</span></div>
+    <div class="prof-stat"><span class="lbl">Легендарок найдено</span><span class="val" style="color:#ffd06a">${state.legendaries}</span></div>
+    <div class="prof-stat"><span class="lbl">Мификов найдено</span><span class="val" style="color:#ff8080">${state.mythics}</span></div>
+    <div class="prof-stat"><span class="lbl">Получено критик</span><span class="val" style="color:#ffeeb0">${state.criticsReceived}</span></div>
+    <div class="prof-stat"><span class="lbl">Получено плевков</span><span class="val" style="color:#ffeeb0">${state.spitsReceived}</span></div>
+    <div class="prof-stat"><span class="lbl">Убежало грибов</span><span class="val" style="color:#e0c8f0">${state.mushroomsFled}</span></div>
+  `;
+
+  titlesGrid.innerHTML = '';
+  TITLES.forEach(t => {
+    const unlocked = t.req(state);
+    const isCurrent = t.id === cur.id;
+    const el = document.createElement('div');
+    el.className = 'title-chip ' + (unlocked ? 'unlocked' : 'locked') + (isCurrent ? ' current' : '');
+    el.innerHTML = `
+      <div class="t-icn">${t.icon}</div>
+      <div class="t-name">${t.name}</div>
+      <div class="t-req">${t.desc}</div>`;
+    titlesGrid.appendChild(el);
+  });
+}
+function checkTitleUnlock(){
+  const cur = getCurrentTitle();
+  if(!state._lastTitleId){ state._lastTitleId = cur.id; return; }
+  if(cur.id !== state._lastTitleId){
+    state._lastTitleId = cur.id;
+    fanfare(); flash('#ffd75e');
+    toast(`🏆 НОВОЕ ЗВАНИЕ: ${cur.icon} ${cur.name}`, '#ffd75e');
+    screenShake();
+  }
+}
+
+/* =========================================================
+   HUD / ИНВЕНТАРЬ
+   ========================================================= */
+function invTotalCount(){
+  let n = 0;
+  for(const k in state.inventory) n += state.inventory[k].count;
+  return n;
+}
+function invTotalValue(){
+  let v = 0;
+  for(const k in state.inventory) v += state.inventory[k].count * state.inventory[k].value;
+  return v;
+}
+function updateHud(){
+  coinsEl.textContent = fmt(state.coins);
+  if(picksEl) picksEl.textContent = fmt(state.picks);
+  if(bestEl){
+    bestEl.textContent = state.best ? state.best : '—';
+    bestEl.style.color = state.bestColor;
+  }
+
+  const cur = getCurrentTitle();
+  lvlEl.textContent = cur.name;
+  lvlIcon.textContent = cur.icon;
+
+  if(state.coins > state.maxCoins) state.maxCoins = state.coins;
+
+  const total = invTotalCount();
+  if(total > 0){
+    invBadge.style.display = '';
+    invBadge.textContent = total > 99 ? '99+' : total;
+  } else {
+    invBadge.style.display = 'none';
+  }
+
+  const p = Math.min(state.pity, PITY_MAX);
+  pityFill.style.width = (p/PITY_MAX*100) + '%';
+  pityNum.textContent  = p + '/' + PITY_MAX;
+
+  checkTitleUnlock();
+}
+function addCoins(n){
+  state.coins += n;
+  if(state.coins > state.maxCoins) state.maxCoins = state.coins;
+  updateHud();
+  coinBox.classList.remove('pop');
+  void coinBox.offsetWidth;
+  coinBox.classList.add('pop');
+}
+function invKey(item){ return item.name + '|' + item.rarity; }
+function addToInventory(item){
+  const k = invKey(item);
+  if(state.inventory[k]) state.inventory[k].count++;
+  else state.inventory[k] = { ...item, count: 1 };
+  state.everOwned[k] = true;
+  updateHud();
+}
+function renderInventory(){
+  invList.innerHTML = '';
+  const entries = Object.entries(state.inventory);
+  const total = invTotalCount();
+  const value = invTotalValue();
+
+  if(entries.length === 0){
+    invStats.innerHTML = 'Рюкзак пуст…';
+    const d = document.createElement('div');
+    d.className = 'empty-msg';
+    d.innerHTML = '🎒 <b>Пусто.</b><br><span style="font-size:11px;opacity:.6">Собери грибы — лут появится здесь.</span>';
+    invList.appendChild(d);
+    sellAllBtn.disabled = true;
+    sellAllBtn.textContent = '💰 ПРОДАТЬ ВСЁ';
+    return;
+  }
+
+  invStats.innerHTML = `Предметов: <b>${fmt(total)}</b> · Ценность: <b>${fmt(value)} $</b>`;
+
+  entries.sort((a,b) => {
+    const ra = RARITY_ORDER.indexOf(a[1].rarity);
+    const rb = RARITY_ORDER.indexOf(b[1].rarity);
+    if(ra !== rb) return rb - ra;
+    return b[1].value - a[1].value;
+  });
+
+  entries.forEach(([key, it]) => {
+    const el = document.createElement('div');
+    el.className = 'inv-item';
+    el.style.borderLeftColor = RARITY[it.rarity].color;
+    el.innerHTML = `
+      <div class="li-icon" style="color:${RARITY[it.rarity].color}">${it.icon}</div>
+      <div class="li-info">
+        <div class="li-name" style="color:${RARITY[it.rarity].color}">${it.name}</div>
+        <div class="li-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].name}</div>
+      </div>
+      <div class="inv-count">×${it.count}</div>
+      <button class="sell-btn" data-key="${key}">+${fmt(it.value)} $</button>`;
+    invList.appendChild(el);
+  });
+
+  sellAllBtn.disabled = false;
+  sellAllBtn.textContent = `💰 ПРОДАТЬ ВСЁ (+${fmt(value)} $)`;
+
+  invList.querySelectorAll('.sell-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sellFromInventory(btn.dataset.key, 1);
+      beep(700, .05, 'triangle', .03);
+    });
+  });
+}
+function sellFromInventory(key, n){
+  const it = state.inventory[key];
+  if(!it) return 0;
+  const amount = Math.min(n, it.count);
+  const gained = amount * it.value;
+  state.coins += gained;
+  it.count -= amount;
+  if(it.count <= 0) delete state.inventory[key];
+  updateHud(); renderInventory();
+  return gained;
+}
+function sellAllInventory(){
+  const value = invTotalValue();
+  if(value <= 0) return 0;
+  state.inventory = {};
+  state.coins += value;
+  updateHud(); renderInventory();
+  return value;
+}
+
+/* =========================================================
+   SVG
+   ========================================================= */
+function mushroomSVG(hue, id){
+  const capL = `hsl(${hue} 62% 64%)`;
+  const capD = `hsl(${hue} 55% 32%)`;
+  const gid  = 'g' + id;
+  return `
+  <svg viewBox="0 0 100 110" class="msvg">
+    <defs><radialGradient id="${gid}" cx="35%" cy="18%" r="85%">
+      <stop offset="0%" stop-color="${capL}"/><stop offset="100%" stop-color="${capD}"/>
+    </radialGradient></defs>
+    <ellipse cx="50" cy="103" rx="27" ry="6" fill="rgba(0,0,0,.45)"/>
+    <path d="M39 54 h22 v26 q0 13 -11 13 q-11 0 -11 -13 z" fill="#e9dfc5"/>
+    <path d="M39 54 h22 v8 h-22 z" fill="#cfc3a3"/>
+    <path d="M5 59 a45 41 0 0 1 90 0 z" fill="url(#${gid})"/>
+    <ellipse cx="30" cy="41" rx="8" ry="5.5" fill="rgba(255,255,255,.28)" transform="rotate(-15 30 41)"/>
+    <ellipse cx="59" cy="28" rx="6" ry="4" fill="rgba(255,255,255,.22)"/>
+    <ellipse cx="75" cy="46" rx="5.5" ry="3.5" fill="rgba(255,255,255,.2)"/>
+  </svg>`;
+}
+function eyesSVG(id){
+  const gid = 'eg' + id;
+  return `
+  <svg viewBox="0 0 100 110" class="msvg">
+    <defs><radialGradient id="${gid}" cx="40%" cy="20%" r="85%">
+      <stop offset="0%" stop-color="#ffdb70"/><stop offset="100%" stop-color="#a07020"/>
+    </radialGradient></defs>
+    <ellipse cx="50" cy="103" rx="27" ry="6" fill="rgba(0,0,0,.5)"/>
+    <path d="M39 54 h22 v26 q0 13 -11 13 q-11 0 -11 -13 z" fill="#e8d8b0"/>
+    <path d="M39 54 h22 v8 h-22 z" fill="#c8b890"/>
+    <path d="M5 59 a45 41 0 0 1 90 0 z" fill="url(#${gid})"/>
+    <ellipse cx="34" cy="40" rx="11" ry="13" fill="#fff" stroke="#3a2a10" stroke-width="2.2"/>
+    <ellipse cx="66" cy="40" rx="11" ry="13" fill="#fff" stroke="#3a2a10" stroke-width="2.2"/>
+    <circle cx="34" cy="42" r="5.5" fill="#1a0a10"/>
+    <circle cx="66" cy="42" r="5.5" fill="#1a0a10"/>
+    <circle cx="31.5" cy="39.5" r="1.8" fill="#fff"/>
+    <circle cx="63.5" cy="39.5" r="1.8" fill="#fff"/>
+    <path d="M20 26 L44 30" stroke="#1a0a10" stroke-width="3" stroke-linecap="round"/>
+    <path d="M80 26 L56 30" stroke="#1a0a10" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 54 Q50 47 60 54" stroke="#1a0a10" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function slugSVG(id){
+  const gid = 'sg' + id;
+  return `
+  <svg viewBox="0 0 100 62" class="ssvg">
+    <defs><radialGradient id="${gid}" cx="40%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#b06ad0"/><stop offset="100%" stop-color="#4a1f60"/>
+    </radialGradient></defs>
+    <ellipse cx="50" cy="54" rx="38" ry="6" fill="rgba(140,255,190,.18)"/>
+    <ellipse cx="50" cy="56" rx="34" ry="4" fill="rgba(0,0,0,.5)"/>
+    <path d="M8 46 Q4 32 16 26 Q26 22 36 24 Q46 24 56 22 Q72 20 86 28 Q94 34 92 44 Q90 50 82 50 L14 50 Q10 50 8 46 Z" fill="url(#${gid})"/>
+    <path d="M18 34 Q40 28 70 30" stroke="rgba(255,255,255,.18)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="28" cy="34" r="2" fill="rgba(255,255,255,.15)"/>
+    <circle cx="42" cy="30" r="1.6" fill="rgba(255,255,255,.15)"/>
+    <circle cx="58" cy="32" r="2.2" fill="rgba(255,255,255,.15)"/>
+    <line x1="30" y1="26" x2="24" y2="10" stroke="#4a1f60" stroke-width="3" stroke-linecap="round"/>
+    <line x1="46" y1="24" x2="46" y2="8"  stroke="#4a1f60" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="24" cy="10" r="5" fill="#fff" stroke="#2a0a30" stroke-width="1.5"/>
+    <circle cx="46" cy="8"  r="5" fill="#fff" stroke="#2a0a30" stroke-width="1.5"/>
+    <circle cx="24" cy="10" r="2.2" fill="#000"/>
+    <circle cx="46" cy="8"  r="2.2" fill="#000"/>
+    <circle cx="22.5" cy="8.5" r=".9" fill="#fff"/>
+    <circle cx="44.5" cy="6.5" r=".9" fill="#fff"/>
+    <path d="M28 44 Q50 50 72 44" stroke="#2a0a30" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <polygon points="36,46 38,51 40,46" fill="#fff"/>
+    <polygon points="50,47 52,52 54,47" fill="#fff"/>
+    <polygon points="64,46 66,51 68,46" fill="#fff"/>
+  </svg>`;
+}
+
+/* =========================================================
+   ГРИБЫ
+   ========================================================= */
+const MAX_REGULAR_MUSHROOMS = 10;
+let mushrooms = [];
+let eyesMushroom = null;
+
+function countRegular(){ return mushrooms.filter(m => !m.isEyes).length; }
+
+function spawnMushroom(){
+  if(state.modalOpen) return;
+  if(countRegular() >= MAX_REGULAR_MUSHROOMS) return;
+
+  const id = ++state.mushId;
+  // На телефоне — более ограниченные отступы, чтобы грибы не уходили под док
+  const small = window.innerWidth < 500;
+  const xMin = small ? 12 : 10, xMax = small ? 88 : 90;
+  const yMin = small ? 22 : 26, yMax = small ? 86 : 88;
+
+  const x = rnd(xMin, xMax);
+  const y = rnd(yMin, yMax);
+  const hue = Math.random() < 0.72 ? rnd(0, 48) : rnd(0, 360);
+
+  const el = document.createElement('div');
+  el.className = 'mush';
+  el.style.left = x + '%';
+  el.style.top  = y + '%';
+  el.style.setProperty('--s', (0.7 + y/100*0.5).toFixed(2));
+  el.style.zIndex = Math.round(y * 0.25) + 2;
+  el.style.animationDelay = (Math.random()*0.15)+'s';
+  el.innerHTML = `<div class="mush-inner">${mushroomSVG(hue, id)}</div>`;
+
+  const m = { id, el, x, y, isEyes: false, fleeing: false };
+
+  el.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if(state.modalOpen) return;
+    if(m.fleeing) return;
+    startCast(m);
+  });
+
+  field.appendChild(el);
+  mushrooms.push(m);
+}
+
+function spawnEyesMushroom(){
+  if(state.modalOpen) return;
+  if(eyesMushroom) return;
+  if(document.querySelector('.mush.eyes')) return;
+
+  const id = ++state.mushId;
+  const small = window.innerWidth < 500;
+
+  const edge = Math.floor(Math.random() * 4);
+  let x, y;
+  if(edge === 0){        x = rnd(16, 84); y = rnd(24, 32); }
+  else if(edge === 1){   x = rnd(16, 84); y = rnd(80, 86); }
+  else if(edge === 2){   x = rnd(10, 15); y = rnd(36, 76); }
+  else {                 x = rnd(85, 90); y = rnd(36, 76); }
+
+  const el = document.createElement('div');
+  el.className = 'mush eyes';
+  el.style.left = x + '%';
+  el.style.top  = y + '%';
+  el.style.setProperty('--s', (0.7 + y/100*0.5).toFixed(2));
+  el.style.zIndex = Math.round(y * 0.25) + 2;
+  el.innerHTML = `<div class="mush-inner">${eyesSVG(id)}<div class="speech-bubble" data-eye-bubble></div></div>`;
+
+  const m = { id, el, x, y, isEyes: true, bubbleTimer: null, spitTimer: null, commentTimer: null };
+
+  el.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if(state.modalOpen) return;
+    eyesCriticizeNow(m);
+  });
+
+  field.appendChild(el);
+  mushrooms.push(m);
+  eyesMushroom = m;
+
+  startEyesCriticism(m);
+  startEyesSpit(m);
+
+  toast('👁️ На поляне появился глазастый гриб.', '#ffd75e');
+}
+
+function removeMushroom(m, fade, escapeClass){
+  const i = mushrooms.indexOf(m);
+  if(i >= 0) mushrooms.splice(i, 1);
+  if(m === eyesMushroom) eyesMushroom = null;
+  if(m.bubbleTimer){ clearTimeout(m.bubbleTimer); m.bubbleTimer = null; }
+  if(m.commentTimer){ clearTimeout(m.commentTimer); m.commentTimer = null; }
+  if(m.spitTimer){ clearTimeout(m.spitTimer); m.spitTimer = null; }
+
+  if(fade){
+    m.el.classList.add(escapeClass || 'escape');
+    setTimeout(()=> m.el.remove(), 950);
+  } else {
+    m.el.remove();
+  }
+}
+
+function mushroomFlee(m, sourceLabel){
+  if(m.fleeing) return;
+  if(m.isEyes) return;
+  if(cast && cast.m === m) return;
+
+  m.fleeing = true;
+  let nx, ny, attempts = 0;
+  do {
+    nx = rnd(14, 86);
+    ny = rnd(26, 84);
+    attempts++;
+  } while (attempts < 8 && Math.hypot(nx - m.x, ny - m.y) < 20);
+
+  m.x = nx; m.y = ny;
+  m.el.classList.add('fleeing');
+  m.el.style.left = nx + '%';
+  m.el.style.top  = ny + '%';
+  m.el.style.setProperty('--s', (0.7 + ny/100*0.5).toFixed(2));
+  m.el.style.zIndex = Math.round(ny * 0.25) + 2;
+
+  state.mushroomsFled++;
+  updateHud();
+
+  setTimeout(() => {
+    if(!document.body.contains(m.el)) return;
+    m.el.classList.remove('fleeing');
+    m.fleeing = false;
+  }, 600);
+
+  if(sourceLabel && Math.random() < 0.35){
+    toast(`💨 ${sourceLabel}`, '#b06ad0', 'slug');
+  }
+}
+
+/* =========================================================
+   ГЛАЗАСТЫЙ: КРИТИКА (10с) + ПЛЕВКИ
+   ========================================================= */
+function startEyesCriticism(m){
+  const bubble = m.el.querySelector('[data-eye-bubble]');
+  if(!bubble) return;
+
+  function showBubble(){
+    if(!document.body.contains(m.el)) return;
+    bubble.textContent = pick(EYES_CRITICISM);
+    bubble.classList.remove('show');
+    void bubble.offsetWidth;
+    bubble.classList.add('show');
+    if(Math.random() < 0.5) criticSound();
+    state.criticsReceived++;
+    updateHud();
+    setTimeout(() => {
+      if(!document.body.contains(m.el)) return;
+      bubble.classList.remove('show');
+    }, 4000);
+  }
+
+  m.commentTimer = setTimeout(function loop(){
+    showBubble();
+    m.commentTimer = setTimeout(loop, 10000);
+  }, 3000 + Math.random()*3000);
+}
+
+function eyesCriticizeNow(m){
+  const bubble = m.el.querySelector('[data-eye-bubble]');
+  const line = pick(EYES_CRITICISM);
+  if(bubble){
+    bubble.textContent = line;
+    bubble.classList.remove('show');
+    void bubble.offsetWidth;
+    bubble.classList.add('show');
+    setTimeout(()=> bubble.classList.remove('show'), 3000);
+  }
+  toast('👁️ «' + line + '»', '#ffd75e', 'critic');
+  criticSound();
+  state.criticsReceived++;
+  updateHud();
+}
+
+function startEyesSpit(m){
+  function loop(){
+    if(!document.body.contains(m.el)) return;
+    if(mushrooms.length > 1){
+      eyesSpit(m);
+      state.spitsReceived++;
+      updateHud();
+    }
+    m.spitTimer = setTimeout(loop, 22000 + Math.random()*16000);
+  }
+  m.spitTimer = setTimeout(loop, 12000 + Math.random()*8000);
+}
+
+function eyesSpit(eyesM){
+  const targets = mushrooms.filter(x => x !== eyesM && !x.isEyes);
+  if(targets.length === 0) return;
+
+  const fromX = eyesM.x, fromY = eyesM.y;
+  targets.sort((a,b) => {
+    const da = Math.hypot(a.x - fromX, a.y - fromY);
+    const db = Math.hypot(b.x - fromX, b.y - fromY);
+    return da - db;
+  });
+  const target = targets[Math.floor(Math.random() * Math.min(2, targets.length))];
+
+  eyesM.el.classList.add('puffing');
+  setTimeout(() => eyesM.el.classList.remove('puffing'), 650);
+  spitSound();
+
+  const fieldRect = field.getBoundingClientRect();
+  const fx = (fromX / 100) * fieldRect.width;
+  const fy = (fromY / 100) * fieldRect.height;
+  const tx = (target.x / 100) * fieldRect.width;
+  const ty = (target.y / 100) * fieldRect.height;
+
+  const proj = document.createElement('div');
+  proj.className = 'spit-glob';
+  proj.style.left = fx + 'px';
+  proj.style.top  = fy + 'px';
+  field.appendChild(proj);
+
+  requestAnimationFrame(() => {
+    proj.style.left = tx + 'px';
+    proj.style.top  = ty + 'px';
+  });
+
+  setTimeout(() => {
+    proj.remove();
+    const splat = document.createElement('div');
+    splat.className = 'spit-splat';
+    splat.style.left = tx + 'px';
+    splat.style.top  = ty + 'px';
+    field.appendChild(splat);
+    setTimeout(() => splat.remove(), 900);
+
+    if(target && document.body.contains(target.el)){
+      mushroomFlee(target, `Глазастый плюнул в гриб!`);
+      beep(400,.1,'square',.04);
+    }
+  }, 600);
+
+  if(Math.random() < 0.5){
+    toast('💦 Глазастый гриб плюнул в гриб!', '#ffd75e', 'critic');
+  }
+}
+
+/* =========================================================
+   СЛИЗНИ
+   ========================================================= */
+const MAX_SLUGS = 2;
+let slugs = [];
+const slugData = new Map();
+let slugRAF = null;
+
+function spawnSlug(){
+  if(slugs.length >= MAX_SLUGS || state.modalOpen) return;
+
+  const id = ++state.mushId;
+  const x = Math.random() < 0.5 ? rnd(8, 14) : rnd(86, 92);
+  const y = rnd(35, 78);
+
+  const el = document.createElement('div');
+  el.className = 'slug';
+  el.style.left = x + '%';
+  el.style.top  = y + '%';
+  el.style.zIndex = Math.round(y * 0.25) + 3;
+  el.style.animationDelay = (Math.random()*0.2)+'s';
+  el.innerHTML = slugSVG(id);
+
+  const slug = { id, el, x, y };
+  field.appendChild(el);
+  slugs.push(slug);
+
+  const angle = Math.random() * Math.PI * 2;
+  slugData.set(id, {
+    dirX: Math.cos(angle), dirY: Math.sin(angle),
+    speed: 0.45 + Math.random() * 0.5,
+    turnTimer: 80 + Math.floor(Math.random()*120),
+    scareCooldown: 90,
+  });
+
+  if(!slugRAF) slugRAF = requestAnimationFrame(slugLoop);
+
+  setTimeout(() => {
+    if(!document.body.contains(el)) return;
+    slug.el.classList.add('leaving');
+    const i = slugs.indexOf(slug);
+    if(i >= 0) slugs.splice(i, 1);
+    slugData.delete(slug.id);
+    setTimeout(()=> el.remove(), 900);
+  }, 45000 + Math.random()*30000);
+}
+
+function slugLoop(){
+  if(slugs.length === 0){ slugRAF = null; return; }
+
+  const fieldRect = field.getBoundingClientRect();
+  const W = fieldRect.width, H = fieldRect.height;
+
+  for(const s of slugs){
+    const d = slugData.get(s.id);
+    if(!d) continue;
+
+    let px = (s.x / 100) * W;
+    let py = (s.y / 100) * H;
+    px += d.dirX * d.speed;
+    py += d.dirY * d.speed;
+
+    const padX = 48, padTop = 100, padBottom = 25;
+    if(px < padX){ px = padX; d.dirX = Math.abs(d.dirX); }
+    if(px > W - padX){ px = W - padX; d.dirX = -Math.abs(d.dirX); }
+    if(py < padTop){ py = padTop; d.dirY = Math.abs(d.dirY); }
+    if(py > H - padBottom){ py = H - padBottom; d.dirY = -Math.abs(d.dirY); }
+
+    const len = Math.hypot(d.dirX, d.dirY) || 1;
+    d.dirX /= len; d.dirY /= len;
+
+    d.turnTimer--;
+    if(d.turnTimer <= 0){
+      d.turnTimer = 80 + Math.floor(Math.random()*140);
+      const a = Math.random() * Math.PI * 2;
+      d.dirX = Math.cos(a); d.dirY = Math.sin(a);
+    }
+
+    s.x = (px / W) * 100;
+    s.y = (py / H) * 100;
+    s.el.style.left = s.x + '%';
+    s.el.style.top  = s.y + '%';
+    s.el.style.zIndex = Math.round(s.y * 0.25) + 3;
+
+    if(d.scareCooldown > 0){ d.scareCooldown--; continue; }
+
+    let victim = null;
+    let minDist = 78;
+    for(const other of mushrooms){
+      if(other.isEyes || other.fleeing) continue;
+      if(cast && cast.m === other) continue;
+      const dx = ((other.x - s.x) / 100) * W;
+      const dy = ((other.y - s.y) / 100) * H;
+      const dist = Math.hypot(dx, dy);
+      if(dist < minDist){ minDist = dist; victim = other; }
+    }
+
+    if(victim){
+      mushroomFlee(victim, 'Слизень распугал грибы!');
+      slugSound();
+      d.scareCooldown = 100 + Math.floor(Math.random()*140);
+    }
+  }
+
+  slugRAF = requestAnimationFrame(slugLoop);
+}
+
+/* =========================================================
+   КАСТ-БАР
+   ========================================================= */
+let cast = null;
+let rafId = null;
+
+function startCast(m){
+  if(cast) cancelCast(null, true);
+  if(m.fleeing) return;
+
+  const escape  = Math.random() < 0.06;
+  const sturdy  = Math.random() < 0.14;
+  const dur = sturdy ? rnd(2100, 3000) : rnd(1250, 2100);
+
+  cast = { m, t0: performance.now(), dur,
+    escapeAt: escape ? rnd(0.35, 0.72) : null, escaped: false };
+
+  m.el.classList.add('casting');
+  castEl.classList.add('show');
+  castLabel.textContent = sturdy ? 'Крепкий гриб…' : 'Сбор гриба…';
+  castFill.style.width = '0%';
+
+  beep(180, .05, 'square', .02);
+  rafId = requestAnimationFrame(castLoop);
+}
+
+function castLoop(){
+  if(!cast) return;
+  const now = performance.now();
+  const p = Math.min(1, (now - cast.t0) / cast.dur);
+  castFill.style.width = (p * 100) + '%';
+
+  if(cast.escapeAt && !cast.escaped && p >= cast.escapeAt){
+    cast.escaped = true;
+    const m = cast.m;
+    cancelCast(null, true);
+    removeMushroom(m, true);
+    toast('💨 Гриб вырвался и убежал!', '#ff7b7b');
+    beep(120, .18, 'sawtooth', .04);
+    return;
+  }
+  if(p >= 1){ finishCast(); return; }
+  rafId = requestAnimationFrame(castLoop);
+}
+
+function cancelCast(msg, silent){
+  if(!cast) return;
+  cancelAnimationFrame(rafId);
+  if(cast.m && cast.m.el) cast.m.el.classList.remove('casting');
+  castEl.classList.remove('show');
+  cast = null;
+  if(msg && !silent) toast(msg, '#ffb020');
+}
+
+function rollLootCount(){
+  let count = 1;
+  if(Math.random() < 0.40) count++;
+  if(Math.random() < 0.20) count++;
+  if(Math.random() < 0.10) count++;
+  if(Math.random() < 0.05) count++;
+  return count;
+}
+
+function finishCast(){
+  const m = cast.m;
+  cancelAnimationFrame(rafId);
+  m.el.classList.remove('casting');
+  castEl.classList.remove('show');
+  cast = null;
+
+  removeMushroom(m, false);
+  state.picks++;
+
+  beep(520, .09, 'sine', .04);
+  setTimeout(()=>beep(700, .1, 'sine', .035), 80);
+
+  const isCrit = Math.random() < 0.10;
+  let count = rollLootCount();
+  if(isCrit) count = Math.min(10, count * 2);
+
+  const items = [];
+  for(let i=0;i<count;i++) items.push(rollItem());
+
+  if(isCrit){
+    toast(`✨ КРИТ! ${count} предметов!`, '#7bf0a4');
+    flash('#7bf0a4');
+  } else if(count >= 4){
+    toast(`🍀 Щедрый гриб — ${count}!`, '#7de89a');
+  }
+
+  updateHud();
+  openLoot(items, isCrit ? '✨ КРИТ! ДОБЫЧА' : `ДОБЫЧА · ${items.length} шт.`);
+
+  if(Math.random() < 0.22){
+    toast(TICKER[Math.floor(Math.random()*TICKER.length)]);
+  }
+}
+
+function rollRarity(){
+  let r;
+  if(state.ritual > 0){
+    state.ritual--;
+    r = weightedPick({ rare:74, epic:22, legendary:3.5, mythic:0.5 });
+    if(state.ritual === 0) toast('⭐ Ритуал закончился.', '#ffb020');
+  } else if(state.pity >= PITY_MAX){
+    r = weightedPick({ epic:82, legendary:15, mythic:3 });
+  } else {
+    r = weightedPick(BASE_WEIGHTS);
+  }
+  if(r === 'epic' || r === 'legendary' || r === 'mythic') state.pity = 0;
+  else state.pity++;
+
+  if(r === 'legendary') state.legendaries++;
+  if(r === 'mythic')    state.mythics++;
+  updateHud();
+  return r;
+}
+function makeItem(rarity){
+  const pool = ITEMS[rarity];
+  const [name, icon, range] = pool[Math.floor(Math.random()*pool.length)];
+  let value = rndI(range[0], range[1]);
+  if(Math.random() < 0.12) value = Math.round(value * 1.6);
+  return { name, icon, rarity, value };
+}
+function rollItem(){ return makeItem(rollRarity()); }
+
+/* =========================================================
+   МОДАЛКА ЛУТА
+   ========================================================= */
+function openLoot(items, title){
+  state.modalOpen = true;
+  lootList.innerHTML = '';
+  modalTitle.textContent = title || 'ДОБЫЧА';
+  modalTotal.textContent = '';
+  modalBack.classList.add('show');
+  takeBtn.disabled = true;
+
+  if(!items.length){
+    const d = document.createElement('div');
+    d.className = 'empty-msg';
+    d.innerHTML = '💀 <b style="color:#ff7b7b">ПУСТО.</b><br>Попробуй ещё раз. Точно повезёт.';
+    lootList.appendChild(d);
+    setTimeout(()=>{ takeBtn.disabled = false; }, 350);
+    return;
+  }
+
+  items.forEach(it => addToInventory(it));
+
+  let total = 0;
+  const stagger = items.length > 5 ? 130 : 200;
+
+  items.forEach((it, idx) => {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'loot-item r-' + it.rarity;
+      el.innerHTML = `
+        <div class="li-icon" style="color:${RARITY[it.rarity].color}">${it.icon}</div>
+        <div class="li-info">
+          <div class="li-name">${it.name}</div>
+          <div class="li-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].name}</div>
+        </div>
+        <div class="li-val">${fmt(it.value)} $</div>`;
+      lootList.appendChild(el);
+      lootList.scrollTop = lootList.scrollHeight;
+
+      raritySound(it.rarity);
+      total += it.value;
+
+      if(it.rarity === 'legendary'){
+        flash('#ffb020'); screenShake();
+        toast('🔥 ЛЕГЕНДАРКА: ' + it.name, '#ffb020');
+      }
+      if(it.rarity === 'mythic'){
+        flash('#ff3b3b'); screenShake();
+        setTimeout(screenShake, 200);
+        toast('🌌 МИФИК: ' + it.name, '#ff3b3b');
+      }
+
+      if(RARITY_ORDER.indexOf(it.rarity) > RARITY_ORDER.indexOf(state.bestRarity)){
+        state.bestRarity = it.rarity;
+        state.best = it.name;
+        state.bestColor = RARITY[it.rarity].color;
+        updateHud();
+      }
+
+      if(idx === items.length - 1){
+        modalTotal.textContent = `ЦЕННОСТЬ (${items.length}): ${fmt(total)} $`;
+        takeBtn.disabled = false;
+      }
+    }, 130 + idx * stagger);
+  });
+}
+
+takeBtn.addEventListener('click', () => {
+  modalBack.classList.remove('show');
+  state.modalOpen = false;
+  beep(400, .06, 'sine', .03);
+});
+
+/* =========================================================
+   ИНВЕНТАРЬ / ПРОФИЛЬ
+   ========================================================= */
+invBtn.addEventListener('click', () => {
+  if(state.modalOpen) return;
+  state.modalOpen = true;
+  renderInventory();
+  invBack.classList.add('show');
+  beep(600, .07, 'sine', .03);
+});
+closeInvBtn.addEventListener('click', () => {
+  invBack.classList.remove('show');
+  state.modalOpen = false;
+  beep(400, .06, 'sine', .03);
+});
+invBack.addEventListener('click', (e) => {
+  if(e.target === invBack){
+    invBack.classList.remove('show');
+    state.modalOpen = false;
+  }
+});
+sellAllBtn.addEventListener('click', () => {
+  const gained = sellAllInventory();
+  if(gained > 0){
+    toast(`💰 Продано за ${fmt(gained)} $`, '#ffd75e');
+    beep(700, .1, 'triangle', .045);
+    setTimeout(()=>beep(900, .12, 'triangle', .04), 100);
+  }
+});
+
+profBtn.addEventListener('click', () => {
+  if(state.modalOpen) return;
+  state.modalOpen = true;
+  renderProfile();
+  profBack.classList.add('show');
+  beep(700, .08, 'sine', .035);
+});
+lvlBadge.addEventListener('click', () => profBtn.click());
+closeProfBtn.addEventListener('click', () => {
+  profBack.classList.remove('show');
+  state.modalOpen = false;
+  beep(400, .06, 'sine', .03);
+});
+profBack.addEventListener('click', (e) => {
+  if(e.target === profBack){
+    profBack.classList.remove('show');
+    state.modalOpen = false;
+  }
+});
+
+/* =========================================================
+   МАГАЗИН
+   ========================================================= */
+function spend(n){
+  if(state.coins < n){
+    toast('❌ Недостаточно (' + fmt(n) + ' $)', '#ff7b7b');
+    beep(140, .15, 'square', .035);
+    return false;
+  }
+  state.coins -= n;
+  updateHud();
+  return true;
+}
+document.getElementById('shopBox').addEventListener('click', () => {
+  if(state.modalOpen) return;
+  if(!spend(50)) return;
+  beep(600, .1, 'triangle', .04);
+  const n = 3 + Math.floor(Math.random()*3);
+  const items = [];
+  for(let i=0;i<n;i++) items.push(rollItem());
+  openLoot(items, `🎁 ЯЩИК · ${n} шт.`);
+});
+document.getElementById('shopRitual').addEventListener('click', () => {
+  if(state.modalOpen) return;
+  if(!spend(120)) return;
+  state.ritual = 3;
+  toast('⭐ Ритуал! 3 сбора — мин. РЕДКИЙ.', '#ffb020');
+  beep(700, .12, 'sine', .045);
+  setTimeout(()=>beep(900, .16, 'sine', .045), 120);
+  flash('#b45cff');
+});
+document.getElementById('shopRisk').addEventListener('click', () => {
+  if(state.modalOpen) return;
+  if(!spend(300)) return;
+  beep(180, .2, 'sawtooth', .05);
+  setTimeout(() => {
+    if(Math.random() < 0.5){
+      const it = makeItem('legendary');
+      state.legendaries++;
+      openLoot([it], '☠️ РИСК — ПОБЕДА!');
+      toast('🔥 Ты выиграл!', '#ffb020');
+    } else {
+      openLoot([], '☠️ РИСК-ГРИБ');
+      toast('💀 Проиграл 300 $.', '#ff7b7b');
+    }
+  }, 350);
+});
+
+field.addEventListener('click', (e) => {
+  if(e.target.closest('.mush')) return;
+  if(cast) cancelCast('Прервано');
+});
+
+/* =========================================================
+   СПАВН
+   ========================================================= */
+function spawnLoop(){
+  if(!state.modalOpen){
+    spawnMushroom();
+    if(Math.random() < 0.35) spawnMushroom();
+  }
+  setTimeout(spawnLoop, rnd(700, 1400));
+}
+function slugSpawnLoop(){
+  if(!state.modalOpen) spawnSlug();
+  setTimeout(slugSpawnLoop, rnd(18000, 32000));
+}
+
+for(let i=0;i<8;i++) setTimeout(spawnMushroom, i*100);
+setTimeout(spawnEyesMushroom, 900);
+
+setTimeout(spawnLoop, 1200);
+setTimeout(spawnSlug, 8000);
+setTimeout(slugSpawnLoop, 22000);
+
+setTimeout(()=>toast('Кликай по грибам!', '#4ade80'), 600);
+setTimeout(()=>toast('За сбор выпадает 1–5 предметов.', '#7de89a'), 4200);
+setTimeout(()=>toast('🐌 Слизни распугивают грибы.', '#b06ad0'), 8500);
+setTimeout(()=>toast('👁️ Глазастый гриб критикует и плюётся.', '#ffd75e'), 12500);
+
+updateHud();
+
+/* Дополнительно: при повороте экрана — пересчитать положение грибов в допустимых границах */
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    // Подстройка позиций грибов под новые размеры
+    mushrooms.forEach(m => {
+      m.x = Math.max(10, Math.min(90, m.x));
+      m.y = Math.max(22, Math.min(86, m.y));
+      m.el.style.left = m.x + '%';
+      m.el.style.top  = m.y + '%';
+    });
+  }, 300);
+});
+</script>
+</body>
+</html>
